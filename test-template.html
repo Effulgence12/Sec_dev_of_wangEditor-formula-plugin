@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数学公式模板测试</title>
+    <link href="https://cdn.jsdelivr.net/npm/@wangeditor/editor@latest/dist/css/style.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/katex@0.15.2/dist/katex.min.css" rel="stylesheet">
+</head>
+<body>
+    <h1>wangEditor数学公式插件 - 模板按钮测试</h1>
+    
+    <div id="toolbar-container" style="border: 1px solid #ccc; border-bottom: none;"></div>
+    <div id="editor-container" style="border: 1px solid #ccc; height: 400px;"></div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@wangeditor/editor@latest/dist/index.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.15.2/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/snabbdom@3.3.1/build/index.js"></script>
+    <script src="./dist/index.js"></script>
+    
+    <script>
+        const { createEditor, createToolbar } = wangEditor;
+        
+        // 创建编辑器实例
+        const editorConfig = {
+            placeholder: '请输入内容...',
+            onChange(editor) {
+                console.log('内容变化：', editor.getHtml());
+            }
+        };
+        
+        const editor = createEditor({
+            selector: '#editor-container',
+            html: '<p>点击工具栏的公式按钮测试新功能！</p>',
+            config: editorConfig,
+            plugins: [formulaModule] // 注册公式插件
+        });
+        
+        // 创建工具栏
+        const toolbarConfig = {
+            toolbarKeys: [
+                'headerSelect',
+                'blockquote',
+                '|',
+                'bold',
+                'italic',
+                'underline',
+                'through',
+                'code',
+                'sub',
+                'sup',
+                'clearStyle',
+                '|',
+                'color',
+                'bgColor',
+                '|',
+                'fontSize',
+                'fontFamily',
+                'lineHeight',
+                '|',
+                'bulletedList',
+                'numberedList',
+                'todo',
+                {
+                    key: 'group-justify',
+                    title: '对齐',
+                    iconSvg: '<svg viewBox="0 0 1024 1024"><path d="M768 793.6v102.4H51.2v-102.4h716.8z m204.8-230.4v102.4H51.2v-102.4h921.6z m-204.8-230.4v102.4H51.2v-102.4h716.8z m204.8-230.4v102.4H51.2V102.4h921.6z"></path></svg>',
+                    menuKeys: ['justifyLeft', 'justifyRight', 'justifyCenter', 'justifyJustify']
+                },
+                '|',
+                'emotion',
+                'insertLink',
+                {
+                    key: 'group-image',
+                    title: '图片',
+                    iconSvg: '<svg viewBox="0 0 1024 1024"><path d="M959.877 128l0.123 0.123v767.775l-0.123 0.122H64.102l-0.122-0.122V128.123l0.122-0.123h895.775zM960 64H64C28.795 64 0 92.795 0 128v768c0 35.205 28.795 64 64 64h896c35.205 0 64-28.795 64-64V128c0-35.205-28.795-64-64-64zM832 288.01c0 53.023-42.988 96.01-96.01 96.01s-96.01-42.987-96.01-96.01S682.967 192 735.99 192 832 234.988 832 288.01zM896 832H128V704l224.01-384 256 320h64l224.01-192z"></path></svg>',
+                    menuKeys: ['insertImage', 'uploadImage']
+                },
+                {
+                    key: 'group-video',
+                    title: '视频',
+                    iconSvg: '<svg viewBox="0 0 1024 1024"><path d="M981.184 160.096C837.568 139.456 678.848 128 512 128S186.432 139.456 42.816 160.096C15.296 267.808 0 386.848 0 512s15.296 244.16 42.816 351.904C186.464 884.544 345.152 896 512 896s325.568-11.456 469.184-32.096C1008.704 756.192 1024 637.152 1024 512s-15.296-244.16-42.816-351.904zM384 672V352l320 160-320 160z"></path></svg>',
+                    menuKeys: ['insertVideo', 'uploadVideo']
+                },
+                {
+                    key: 'group-table',
+                    title: '表格',
+                    iconSvg: '<svg viewBox="0 0 1024 1024"><path d="M0 128c0-35.205 28.795-64 64-64h896c35.205 0 64 28.795 64 64v768c0 35.205-28.795 64-64 64H64c-35.205 0-64-28.795-64-64V128z m64 0v256h896V128H64z m896 320H64v256h896V448z m0 320H64v128h896V768z"></path></svg>',
+                    menuKeys: ['insertTable', 'deleteTable', 'insertTableRow', 'deleteTableRow', 'insertTableCol', 'deleteTableCol', 'tableHeader', 'tableFullWidth']
+                },
+                'codeBlock',
+                'divider',
+                'undo',
+                'redo',
+                '|',
+                'fullScreen',
+                'insertFormula', // 公式插入按钮
+                'editFormula'   // 公式编辑按钮
+            ]
+        };
+        
+        const toolbar = createToolbar({
+            editor,
+            selector: '#toolbar-container',
+            config: toolbarConfig,
+        });
+        
+        console.log('编辑器初始化完成');
+    </script>
+</body>
+</html>

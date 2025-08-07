@@ -17,6 +17,7 @@ import { SIGMA_SVG } from '../../constants/icon-svg'
 import $, { Dom7Array, DOMElement } from '../../utils/dom'
 import { genRandomStr } from '../../utils/util'
 import { FormulaElement } from '../custom-types'
+import { FormulaTemplatePanel } from './FormulaTemplates'
 
 /**
  * 生成唯一的 DOM ID
@@ -30,10 +31,11 @@ class InsertFormulaMenu implements IModalMenu {
   readonly iconSvg = SIGMA_SVG
   readonly tag = 'button'
   readonly showModal = true // 点击 button 时显示 modal
-  readonly modalWidth = 300
+  readonly modalWidth = 400  // 增加宽度以容纳模板按钮
   private $content: Dom7Array | null = null
   private readonly textareaId = genDomID()
   private readonly buttonId = genDomID()
+  private templatePanel: FormulaTemplatePanel | null = null
 
   getValue(editor: IDomEditor): string | boolean {
     // 插入菜单，不需要 value
@@ -85,10 +87,45 @@ class InsertFormulaMenu implements IModalMenu {
       // 第一次渲染
       const $content = $('<div></div>')
 
-      // 绑定事件（第一次渲染时绑定，不要重复绑定）
+      // 初始化模板面板
+      this.templatePanel = new FormulaTemplatePanel()
+
+      // 使用事件委托在容器上绑定事件，避免重复绑定问题
+      $content.on('click', '.template-button, .template-sub-button', (e) => {
+        e.preventDefault()
+        console.log('模板按钮被点击了 - target:', e.target, 'currentTarget:', e.currentTarget)
+        
+        // 使用 e.target 获取实际被点击的元素
+        let target = e.target as HTMLElement
+        
+        // 如果点击的是按钮内部的元素（如SVG或span），需要向上查找到按钮元素
+        while (target && !target.classList.contains('template-button') && !target.classList.contains('template-sub-button')) {
+          target = target.parentElement as HTMLElement
+        }
+        
+        console.log('找到的按钮元素:', target)
+        
+        if (target) {
+          const latex = target.getAttribute('data-latex')
+          console.log('获取到的LaTeX:', latex)
+          
+          if (latex) {
+            console.log('调用onInsert回调函数')
+            // 将模板插入到textarea中
+            const currentValue = $content.find(`#${textareaId}`).val() as string
+            const newValue = currentValue ? `${currentValue} ${latex}` : latex
+            console.log('设置新值:', newValue)
+            $content.find(`#${textareaId}`).val(newValue)
+            $content.find(`#${textareaId}`).focus()
+            console.log('已更新输入框内容')
+          }
+        }
+      })
+
+      // 绑定确认按钮事件（第一次渲染时绑定，不要重复绑定）
       $content.on('click', `#${buttonId}`, e => {
         e.preventDefault()
-        const value = $content.find(`#${textareaId}`).val().trim()
+        const value = $content.find(`#${textareaId}`).val()?.toString().trim() || ''
         this.insertFormula(editor, value)
         editor.hidePanelOrModal() // 隐藏 modal
       })
@@ -99,6 +136,12 @@ class InsertFormulaMenu implements IModalMenu {
 
     const $content = this.$content
     $content.html('') // 先清空内容
+
+    // 添加模板面板
+    if (this.templatePanel) {
+      const $templatePanel = this.templatePanel.createPanel()
+      $content.append($templatePanel)
+    }
 
     // append textarea and button
     $content.append(textareaContainerElem)

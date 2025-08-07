@@ -1,73 +1,67 @@
-# wangEditor 公式
 
-[English Documentation](./README-en.md)
+# wangEditor 公式插件二次开发项目
 
-## 介绍
+本项目基于官方 `@wangeditor/plugin-formula` 进行二次开发，旨在增强其在复杂数学公式编辑场景下的能力，为在线考试系统、科研文档协作等应用提供更强大、更易用的公式输入体验。
 
-[wangEditor](https://www.wangeditor.com/) 公式插件，使用 [LateX](https://baike.baidu.com/item/LaTeX/1212106) 语法。
+[English](./README-en.md)
 
-![](./_img/demo.png)
+## 简介
 
-## 安装
+`wangEditor` 是一款优秀的开源富文本编辑器，其 V5 版本提供了强大且灵活的插件体系。官方的公式插件 `@wangeditor/plugin-formula` 基于 `KaTeX` 库，实现了基础的 `LaTeX` 公式渲染功能。
 
-```shell
-yarn add katex
-yarn add @wangeditor/plugin-formula
-```
+然而，在实际的复杂应用场景（如在线考试、学术论文撰写）中，仅提供一个简单的 `LaTeX` 文本输入框是远远不够的。用户往往需要更直观、更便捷的方式来输入复杂的公式，例如矩阵、多行公式、各类运算符等。
 
-## 使用
+本项目正是为了解决这一痛点而启动的二次开发。
 
-### 注册到编辑器
+## 二次开发目标
 
-```js
-import { Boot, IEditorConfig, IToolbarConfig } from '@wangeditor/editor'
-import formulaModule from '@wangeditor/plugin-formula'
+1.  **增强用户体验**：将原有的纯文本输入模式，升级为带**可视化按钮面板**的“公式编辑器”，实现“点击按钮即可生成 `LaTeX` 公式模板”的功能。
+2.  **支持复杂公式模板**：在新的编辑面板中，内置常用的数学符号、运算符、关系符、高级结构（如矩阵、分数、根号、上下标）等模板。
+3.  **修复与优化**：研究并解决在特定复杂 `LaTeX` 语法下可能出现的渲染错误或样式问题。
+4.  **完善文档**：撰写清晰的开发说明和用户使用文档。
 
-// 注册。要在创建编辑器之前注册，且只能注册一次，不可重复注册。
-Boot.registerModule(formulaModule)
-```
+## 开发现状与计划
 
-### 配置
+### ✅ 阶段一：环境搭建与原理分析 (已完成)
 
-```js
-// 编辑器配置
-const editorConfig: Partial<IEditorConfig> = {
-  // 选中公式时的悬浮菜单
-  hoverbarKeys: {
-    formula: {
-      menuKeys: ['editFormula'], // “编辑公式”菜单
-    },
-  },
+-   [x] 成功克隆并运行官方 `v5` 版公式插件示例。
+-   [x] 深入分析了插件的实现原理：
+    -   **渲染核心**：使用 `KaTeX` 库将 `LaTeX` 字符串渲染为 HTML。
+    -   **插件结构**：遵循 `wangEditor V5` 插件规范，通过 `plugin`、`render-elem`、`elem-to-html`、`parse-elem-html` 和 `menu` 等模块协作。
+    -   **交互方式**：通过点击菜单按钮，弹出一个简单的模态框，在 `<textarea>` 中输入 `LaTeX` 字符串进行公式的插入和修改。
+-   [x] 对比分析了 `wangEditor v3/v4` 版本与 `kityformula-editor` 的集成方案，明确了本项目二次开发的可行性和技术路径。
 
-  // 其他...
-}
+### 🟡 阶段二：核心功能开发 (进行中)
 
-// 工具栏配置
-const toolbarConfig: Partial<IToolbarConfig> = {
-  insertKeys: {
-    index: 0,
-    keys: [
-      'insertFormula', // “插入公式”菜单
-      // 'editFormula' // “编辑公式”菜单
-    ],
-  },
+-   [ ] **UI 设计与实现**：设计并开发一个全新的公式编辑弹窗界面。
+    -   左侧为公式分类（如常用符号、运算符、矩阵等）。
+    -   右侧为对应分类下的按钮面板。
+    -   下方为 `LaTeX` 字符串输入/预览区和确定/取消按钮。
+-   [ ] **模板引擎**：为每个面板按钮编写 `JavaScript` 逻辑，实现点击后向输入区插入对应的 `LaTeX` 代码片段。
+-   [ ] **交互优化**：处理光标定位、模板占位符等交互细节。
 
-  // 其他...
-}
-```
+### ⚪️ 阶段三：测试、优化与文档撰写 (待开始)
 
-然后创建编辑器和工具栏，会用到 `editorConfig` 和 `toolbarConfig` 。具体查看 wangEditor 文档。
+-   [ ] **功能测试**：针对所有新增的公式模板进行插入、渲染和回显编辑测试。
+-   [ ] **兼容性测试**：在不同浏览器环境下测试渲染效果。
+-   [ ] **文档完善**：更新 `README.md`，详细描述插件的新功能和使用方法。撰写 `DEV.md`，记录二次开发过程中的技术要点和注意事项。
 
-### 显示 HTML
+## 本地开发
 
-公式获取的 HTML 格式如下
+1.  **安装依赖**
+    ```bash
+    # 推荐使用 npm
+    npm install
+    ```
 
-```html
-<span data-w-e-type="formula" data-w-e-is-void data-w-e-is-inline data-value="c = \\pm\\sqrt{a^2 + b^2}"></span>
-```
+2.  **启动本地服务**
+    ```bash
+    npm run dev
+    ```
+    服务启动后，在浏览器打开 `http://localhost:8080` 即可看到示例页面。代码修改后页面会自动刷新。
 
-其中 `data-value` 就是 LateX 格式的值，可使用第三方工具把 `<span>` 渲染成公式卡片，如 [KateX](https://katex.org/)。
+3.  **执行单元测试**
+    ```bash
+    npm test
+    ```
 
-## 其他
-
-支持 i18n 多语言

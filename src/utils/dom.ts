@@ -3,7 +3,7 @@
  * @author wangfupeng
  */
 
-import $, { append, html, val, on, focus, is, parents, find } from 'dom7'
+import $, { append, html, val, on, focus, is, parents, find, attr } from 'dom7'
 
 if (append) $.fn.append = append
 if (html) $.fn.html = html
@@ -13,6 +13,7 @@ if (focus) $.fn.focus = focus
 if (is) $.fn.is = is
 if (parents) $.fn.parents = parents
 if (find) $.fn.find = find
+if (attr) $.fn.attr = attr
 
 export { Dom7Array } from 'dom7'
 export default $
