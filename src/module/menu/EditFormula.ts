@@ -18,6 +18,7 @@ import { PENCIL_SVG } from '../../constants/icon-svg'
 import $, { Dom7Array, DOMElement } from '../../utils/dom'
 import { genRandomStr } from '../../utils/util'
 import { FormulaElement } from '../custom-types'
+import { FormulaPreview } from './FormulaTemplates'
 
 /**
  * 生成唯一的 DOM ID
@@ -31,10 +32,11 @@ class EditFormulaMenu implements IModalMenu {
   readonly iconSvg = PENCIL_SVG
   readonly tag = 'button'
   readonly showModal = true // 点击 button 时显示 modal
-  readonly modalWidth = 300
+  readonly modalWidth = 700
   private $content: Dom7Array | null = null
   private readonly textareaId = genDomID()
   private readonly buttonId = genDomID()
+  private previewPanel: FormulaPreview | null = null
 
   private getSelectedElem(editor: IDomEditor): FormulaElement | null {
     const node = DomEditor.getSelectedNodeByType(editor, 'formula')
@@ -94,7 +96,24 @@ class EditFormulaMenu implements IModalMenu {
 
     if (this.$content == null) {
       // 第一次渲染
-      const $content = $('<div></div>')
+      const $content = $('<div class="formula-edit-container"></div>')
+
+      // 初始化预览面板
+      this.previewPanel = new FormulaPreview()
+
+      // 添加样式
+      this.addEditModalStyles()
+
+      // 绑定textarea输入事件，实现实时预览
+      $content.on('input', `#${textareaId}`, e => {
+        const target = e.target
+        if (!target) return
+
+        const value = $(target).val()?.toString() || ''
+        if (this.previewPanel) {
+          this.previewPanel.renderPreview(value)
+        }
+      })
 
       // 绑定事件（第一次渲染时绑定，不要重复绑定）
       $content.on('click', `#${buttonId}`, e => {
@@ -111,13 +130,34 @@ class EditFormulaMenu implements IModalMenu {
     const $content = this.$content
     $content.html('') // 先清空内容
 
-    // append textarea and button
-    $content.append(textareaContainerElem)
-    $content.append(buttonContainerElem)
+    // 创建左右分栏结构
+    const $mainContainer = $('<div class="formula-edit-main"></div>')
 
-    // 设置 input val
+    // 左侧面板：输入区
+    const $leftPanel = $('<div class="formula-edit-left"></div>')
+    $leftPanel.append(textareaContainerElem)
+    $leftPanel.append(buttonContainerElem)
+
+    // 右侧面板：预览区
+    const $rightPanel = $('<div class="formula-edit-right"></div>')
+    if (this.previewPanel) {
+      const $previewPanel = this.previewPanel.createPreview()
+      $rightPanel.append($previewPanel)
+    }
+
+    // 组装布局
+    $mainContainer.append($leftPanel)
+    $mainContainer.append($rightPanel)
+    $content.append($mainContainer)
+
+    // 设置 input val 并触发预览
     const value = this.getValue(editor)
     $textarea.val(value)
+
+    // 初始化预览
+    if (this.previewPanel && value) {
+      this.previewPanel.renderPreview(value.toString())
+    }
 
     // focus 一个 input（异步，此时 DOM 尚未渲染）
     setTimeout(() => {
@@ -125,6 +165,49 @@ class EditFormulaMenu implements IModalMenu {
     })
 
     return $content[0]
+  }
+
+  private addEditModalStyles(): void {
+    // 检查是否已经添加了样式
+    if (document.getElementById('formula-edit-modal-styles')) {
+      return
+    }
+
+    const style = document.createElement('style')
+    style.id = 'formula-edit-modal-styles'
+    style.innerHTML = `
+      .formula-edit-container {
+        width: 100%;
+        height: 100%;
+      }
+      .formula-edit-main {
+        display: flex;
+        width: 100%;
+        height: 100%;
+        gap: 0;
+      }
+      .formula-edit-left {
+        flex: 1;
+        padding: 15px;
+        display: flex;
+        flex-direction: column;
+      }
+      .formula-edit-right {
+        width: 300px;
+        flex-shrink: 0;
+      }
+      
+      /* 调整输入区域样式 */
+      .formula-edit-left .w-e-modal-textarea-container {
+        margin-bottom: 15px;
+        flex: 1;
+      }
+      
+      .formula-edit-left .w-e-modal-button-container {
+        text-align: right;
+      }
+    `
+    document.head.appendChild(style)
   }
 
   private updateFormula(editor: IDomEditor, value: string) {

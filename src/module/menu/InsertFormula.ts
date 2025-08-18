@@ -17,7 +17,7 @@ import { SIGMA_SVG } from '../../constants/icon-svg'
 import $, { Dom7Array, DOMElement } from '../../utils/dom'
 import { genRandomStr } from '../../utils/util'
 import { FormulaElement } from '../custom-types'
-import { FormulaTemplatePanel } from './FormulaTemplates'
+import { FormulaTemplatePanel, FormulaPreview } from './FormulaTemplates'
 
 /**
  * 生成唯一的 DOM ID
@@ -31,11 +31,12 @@ class InsertFormulaMenu implements IModalMenu {
   readonly iconSvg = SIGMA_SVG
   readonly tag = 'button'
   readonly showModal = true // 点击 button 时显示 modal
-  readonly modalWidth = 400  // 增加宽度以容纳模板按钮
+  readonly modalWidth = 800 // 增加宽度以容纳模板按钮和预览区
   private $content: Dom7Array | null = null
   private readonly textareaId = genDomID()
   private readonly buttonId = genDomID()
   private templatePanel: FormulaTemplatePanel | null = null
+  private previewPanel: FormulaPreview | null = null
 
   getValue(editor: IDomEditor): string | boolean {
     // 插入菜单，不需要 value
@@ -85,40 +86,71 @@ class InsertFormulaMenu implements IModalMenu {
 
     if (this.$content == null) {
       // 第一次渲染
-      const $content = $('<div></div>')
+      const $content = $('<div class="formula-modal-container"></div>')
 
-      // 初始化模板面板
+      // 添加模态框样式
+      this.addModalStyles()
+
+      // 初始化模板面板和预览面板
       this.templatePanel = new FormulaTemplatePanel()
+      this.previewPanel = new FormulaPreview()
 
       // 使用事件委托在容器上绑定事件，避免重复绑定问题
-      $content.on('click', '.template-button, .template-sub-button', (e) => {
+      $content.on('click', '.template-button, .template-sub-button', e => {
         e.preventDefault()
         console.log('模板按钮被点击了 - target:', e.target, 'currentTarget:', e.currentTarget)
-        
+
         // 使用 e.target 获取实际被点击的元素
         let target = e.target as HTMLElement
-        
+
         // 如果点击的是按钮内部的元素（如SVG或span），需要向上查找到按钮元素
-        while (target && !target.classList.contains('template-button') && !target.classList.contains('template-sub-button')) {
+        while (
+          target &&
+          !target.classList.contains('template-button') &&
+          !target.classList.contains('template-sub-button')
+        ) {
           target = target.parentElement as HTMLElement
         }
-        
+
         console.log('找到的按钮元素:', target)
-        
+
         if (target) {
           const latex = target.getAttribute('data-latex')
           console.log('获取到的LaTeX:', latex)
-          
+
           if (latex) {
             console.log('调用onInsert回调函数')
             // 将模板插入到textarea中
             const currentValue = $content.find(`#${textareaId}`).val() as string
             const newValue = currentValue ? `${currentValue} ${latex}` : latex
             console.log('设置新值:', newValue)
-            $content.find(`#${textareaId}`).val(newValue)
-            $content.find(`#${textareaId}`).focus()
+
+            const $textarea = $content.find(`#${textareaId}`)
+            $textarea.val(newValue)
+            $textarea.focus()
+
+            // 手动触发原生input事件来更新预览，确保只触发一次
+            const textareaElement = $textarea[0] as HTMLTextAreaElement
+            if (textareaElement) {
+              const inputEvent = new Event('input', { bubbles: true })
+              textareaElement.dispatchEvent(inputEvent)
+            }
+
             console.log('已更新输入框内容')
           }
+        }
+      })
+
+      // 绑定textarea输入事件，实现实时预览
+      $content.on('input', `#${textareaId}`, e => {
+        const target = e.target
+        if (!target) return
+
+        const value = $(target).val()?.toString() || ''
+        console.log('LaTeX输入变化:', value)
+
+        if (this.previewPanel) {
+          this.previewPanel.renderPreview(value)
         }
       })
 
@@ -137,15 +169,33 @@ class InsertFormulaMenu implements IModalMenu {
     const $content = this.$content
     $content.html('') // 先清空内容
 
+    // 创建左右分栏结构
+    const $mainContainer = $('<div class="formula-main-container"></div>')
+
+    // 左侧面板：模板选择和输入区
+    const $leftPanel = $('<div class="formula-left-panel"></div>')
+
     // 添加模板面板
     if (this.templatePanel) {
       const $templatePanel = this.templatePanel.createPanel()
-      $content.append($templatePanel)
+      $leftPanel.append($templatePanel)
     }
 
-    // append textarea and button
-    $content.append(textareaContainerElem)
-    $content.append(buttonContainerElem)
+    // 添加输入区域和按钮
+    $leftPanel.append(textareaContainerElem)
+    $leftPanel.append(buttonContainerElem)
+
+    // 右侧面板：预览区
+    const $rightPanel = $('<div class="formula-right-panel"></div>')
+    if (this.previewPanel) {
+      const $previewPanel = this.previewPanel.createPreview()
+      $rightPanel.append($previewPanel)
+    }
+
+    // 组装布局
+    $mainContainer.append($leftPanel)
+    $mainContainer.append($rightPanel)
+    $content.append($mainContainer)
 
     // 设置 input val
     $textarea.val('')
@@ -156,6 +206,57 @@ class InsertFormulaMenu implements IModalMenu {
     })
 
     return $content[0]
+  }
+
+  private addModalStyles(): void {
+    // 检查是否已经添加了样式
+    if (document.getElementById('formula-modal-styles')) {
+      return
+    }
+
+    const style = document.createElement('style')
+    style.id = 'formula-modal-styles'
+    style.innerHTML = `
+      .formula-modal-container {
+        width: 100%;
+        height: 100%;
+      }
+      .formula-main-container {
+        display: flex;
+        width: 100%;
+        height: 100%;
+        gap: 0;
+      }
+      .formula-left-panel {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      .formula-right-panel {
+        width: 400px;
+        flex-shrink: 0;
+      }
+      
+      /* 调整模板面板在左侧面板中的样式 */
+      .formula-left-panel .formula-template-panel {
+        border-bottom: 1px solid #e8e8e8;
+        margin-bottom: 0;
+        max-width: none;
+      }
+      
+      /* 调整输入区域样式 */
+      .formula-left-panel .w-e-modal-textarea-container {
+        margin-bottom: 15px;
+        padding: 0 15px;
+      }
+      
+      .formula-left-panel .w-e-modal-button-container {
+        padding: 0 15px 15px 15px;
+        text-align: right;
+      }
+    `
+    document.head.appendChild(style)
   }
 
   private insertFormula(editor: IDomEditor, value: string) {
