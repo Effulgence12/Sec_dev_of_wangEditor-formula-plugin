@@ -3,6 +3,28 @@
  * @author enhanced
  */
 
+// 可编辑区域接口定义
+interface EditableRegion {
+  type:
+    | 'variable'
+    | 'number'
+    | 'subscript'
+    | 'superscript'
+    | 'function_parameter'
+    | 'fraction_numerator'
+    | 'fraction_denominator'
+    | 'sqrt_content'
+    | 'integral_lower'
+    | 'integral_upper'
+  value: string
+  startIndex: number
+  endIndex: number
+  key: string
+  originalLatex?: string
+  functionName?: string // 仅在 type 为 'function_parameter' 时存在
+  fractionType?: 'numerator' | 'denominator' // 仅在 type 为 'fraction_numerator' 或 'fraction_denominator' 时存在
+}
+
 import $, { Dom7Array } from '../../utils/dom'
 import {
   FRACTION_SVG,
@@ -156,28 +178,28 @@ export const FORMULA_CATEGORIES: FormulaCategory[] = [
     name: '常用',
     icon: FRACTION_SVG,
     templates: [
-      {
-        name: 'fraction',
-        icon: FRACTION_SVG,
-        latex: '\\frac{a}{b}',
+  {
+    name: 'fraction',
+    icon: FRACTION_SVG,
+    latex: '\\frac{a}{b}',
         description: '分数',
-      },
-      {
-        name: 'sqrt',
-        icon: SQRT_SVG,
-        latex: '\\sqrt{x}',
+  },
+  {
+    name: 'sqrt',
+    icon: SQRT_SVG,
+    latex: '\\sqrt{x}',
         description: '开方',
-      },
-      {
-        name: 'exp',
-        icon: EXP_SVG,
-        latex: 'e^{x}',
+  },
+  {
+    name: 'exp',
+    icon: EXP_SVG,
+    latex: 'e^{x}',
         description: '指数',
-      },
-      {
-        name: 'limit',
-        icon: LIMIT_SVG,
-        latex: '\\lim_{x \\to \\infty}',
+  },
+  {
+    name: 'limit',
+    icon: LIMIT_SVG,
+    latex: '\\lim_{x \\to \\infty}',
         description: '极限',
       },
       {
@@ -199,12 +221,12 @@ export const FORMULA_CATEGORIES: FormulaCategory[] = [
     name: '函数',
     icon: TRIG_SVG,
     templates: [
-      {
-        name: 'trig',
-        icon: TRIG_SVG,
-        latex: '\\sin(x)',
-        description: '三角函数',
-        submenu: [
+  {
+    name: 'trig',
+    icon: TRIG_SVG,
+    latex: '\\sin(x)',
+    description: '三角函数',
+    submenu: [
           { name: 'sin', icon: SIN_SVG, latex: '\\sin(x)', description: 'sin' },
           { name: 'cos', icon: COS_SVG, latex: '\\cos(x)', description: 'cos' },
           { name: 'tan', icon: TAN_SVG, latex: '\\tan(x)', description: 'tan' },
@@ -409,10 +431,10 @@ export class FormulaTemplatePanel {
     }
 
     const $panel = $('<div class="formula-template-panel"></div>')
-
+    
     // 添加样式到页面head
     this.addStyles()
-
+    
     // 添加标题
     const $title = $('<div class="template-title">公式模板</div>')
     $panel.append($title)
@@ -465,38 +487,38 @@ export class FormulaTemplatePanel {
 
       // 为每个分类创建按钮
       category.templates.forEach(template => {
-        if (template.submenu) {
-          // 创建带下拉菜单的按钮组
+      if (template.submenu) {
+        // 创建带下拉菜单的按钮组
           const $buttonGroup = $(
             '<div class="template-button-group" data-template="' + template.name + '"></div>'
           )
-
-          // 主按钮
-          const $mainButton = $(`
+        
+        // 主按钮
+        const $mainButton = $(`
           <button class="template-button has-submenu" data-latex="${template.latex}" title="${template.description}">
             ${template.icon}
             <span class="template-name">${template.description}</span>
             <span class="dropdown-arrow">${DROPDOWN_SVG}</span>
           </button>
         `)
-
-          // 下拉菜单
-          const $submenu = $('<div class="template-submenu"></div>')
-          template.submenu.forEach(subTemplate => {
-            const $subButton = $(`
+        
+        // 下拉菜单
+        const $submenu = $('<div class="template-submenu"></div>')
+        template.submenu.forEach(subTemplate => {
+          const $subButton = $(`
             <button class="template-sub-button" data-latex="${subTemplate.latex}" title="${subTemplate.description}">
               ${subTemplate.description}
             </button>
           `)
-            $submenu.append($subButton)
-          })
-
-          $buttonGroup.append($mainButton)
-          $buttonGroup.append($submenu)
+          $submenu.append($subButton)
+        })
+        
+        $buttonGroup.append($mainButton)
+        $buttonGroup.append($submenu)
           $buttonsContainer.append($buttonGroup)
-        } else {
-          // 普通按钮
-          const $button = $(`
+      } else {
+        // 普通按钮
+        const $button = $(`
           <button class="template-button" data-latex="${template.latex}" title="${template.description}">
             ${template.icon}
             <span class="template-name">${template.description}</span>
@@ -512,7 +534,7 @@ export class FormulaTemplatePanel {
     $tabsContainer.append($tabsNav)
     $tabsContainer.append($tabsContent)
     $panel.append($tabsContainer)
-
+    
     this.$panel = $panel
     return $panel
   }
@@ -781,9 +803,31 @@ export class FormulaPreview {
   private $container: Dom7Array | null = null
   private $previewArea: Dom7Array | null = null
   private $errorArea: Dom7Array | null = null
+  private editMode: boolean = false
+  private currentLatex: string = ''
+  private editableRegions: EditableRegion[] = []
 
   constructor() {}
 
+  // 切换编辑模式
+  toggleEditMode(): void {
+    this.editMode = !this.editMode
+
+    // 更新按钮文本
+    const $editToggle = this.$container?.find('.edit-mode-toggle')
+    if ($editToggle && $editToggle[0]) {
+      const button = $editToggle[0] as HTMLButtonElement
+      button.textContent = this.editMode ? '预览模式' : '编辑模式'
+      button.style.background = this.editMode ? '#52c41a' : '#1890ff'
+    }
+
+    // 重新渲染当前内容
+    if (this.currentLatex) {
+      this.renderPreview(this.currentLatex)
+    }
+  }
+
+  // 创建预览区域（增加编辑模式切换按钮）
   createPreview(): Dom7Array {
     if (this.$container) {
       return this.$container
@@ -794,9 +838,14 @@ export class FormulaPreview {
     // 添加预览样式
     this.addPreviewStyles()
 
-    // 预览标题
+    // 预览标题和编辑模式切换
+    const $titleRow = $('<div class="preview-title-row"></div>')
     const $title = $('<div class="preview-title">实时预览</div>')
-    $container.append($title)
+    const $editToggle = $('<button class="edit-mode-toggle">编辑模式</button>')
+
+    $editToggle.on('click', () => this.toggleEditMode())
+    $titleRow.append($title).append($editToggle)
+    $container.append($titleRow)
 
     // 预览区域
     const $previewArea = $('<div class="preview-area"></div>')
@@ -819,7 +868,18 @@ export class FormulaPreview {
 
   renderPreview(latexString: string): void {
     console.log('renderPreview 被调用，参数:', latexString)
+    this.currentLatex = latexString
 
+    // 根据编辑模式选择渲染方法
+    if (this.editMode) {
+      this.renderEditablePreview(latexString)
+    } else {
+      this.renderNormalPreview(latexString)
+    }
+  }
+
+  // 渲染普通预览（非编辑模式）
+  private renderNormalPreview(latexString: string): void {
     if (!this.$previewArea || !this.$errorArea) {
       console.error('预览区域未初始化')
       return
@@ -870,6 +930,891 @@ export class FormulaPreview {
     }
   }
 
+  // 渲染可编辑的预览
+  renderEditablePreview(latexString: string): void {
+    console.log('renderEditablePreview 被调用，参数:', latexString)
+    this.currentLatex = latexString
+
+    if (!this.$previewArea || !this.$errorArea) {
+      console.error('预览区域未初始化')
+      return
+    }
+
+    // 清空之前的内容和隐藏错误区域
+    this.$previewArea.html('')
+    if (this.$errorArea[0]) {
+      ;(this.$errorArea[0] as HTMLElement).style.display = 'none'
+    }
+
+    if (!latexString.trim()) {
+      const placeholderHtml =
+        '<div class="preview-placeholder">在左侧输入LaTeX公式，这里将显示预览效果</div>'
+      this.$previewArea.html(placeholderHtml)
+      return
+    }
+
+    try {
+      // 1. 正常渲染KaTeX
+      const previewElement = document.createElement('span')
+      previewElement.style.display = 'inline-block'
+
+      katex.render(latexString, previewElement, {
+        throwOnError: false,
+      })
+
+      // 2. 识别可编辑区域
+      this.editableRegions = this.identifyEditableRegions(latexString)
+
+      // 3. 添加编辑热区
+      this.addEditableHotspots(previewElement, latexString)
+
+      // 4. 添加到预览区
+      this.$previewArea[0].appendChild(previewElement)
+      console.log('可编辑预览渲染成功，可编辑区域数量:', this.editableRegions.length)
+    } catch (error) {
+      console.log('可编辑预览渲染失败:', error)
+      const errorMessage = error instanceof Error ? error.message : '未知错误'
+
+      this.$errorArea.text(`语法错误: ${errorMessage}`)
+      if (this.$errorArea[0]) {
+        ;(this.$errorArea[0] as HTMLElement).style.display = 'block'
+      }
+
+      const rawLatexHtml = `<div class="preview-raw-latex">${latexString}</div>`
+      this.$previewArea.html(rawLatexHtml)
+    }
+  }
+
+  // 识别可编辑区域 - 基于括号识别，更准确
+  private identifyEditableRegions(latex: string): EditableRegion[] {
+    const regions: EditableRegion[] = []
+
+    console.log('开始基于括号识别可编辑区域...')
+
+    // 1. 函数命令中的参数 - 圆括号和大括号
+    const functionPattern1 =
+      /\\(exp|log|ln|sin|cos|tan|cot|sec|csc|arcsin|arccos|arctan|arccot|arcsec|arccsc)\{([^}]+)\}/g
+    const functionPattern2 =
+      /\\(exp|log|ln|sin|cos|tan|cot|sec|csc|arcsin|arccos|arctan|arccot|arcsec|arccsc)\(([^)]+)\)/g
+
+    console.log('开始识别函数参数...')
+    console.log('当前LaTeX字符串:', latex)
+
+    let match
+
+    // 处理大括号格式的函数
+    while ((match = functionPattern1.exec(latex)) !== null) {
+      const functionName = match[1]
+      const parameter = match[2]
+
+      console.log(`找到大括号函数: ${functionName}{${parameter}}`)
+
+      // 检查参数是否包含可编辑内容
+      if (parameter.match(/[a-zA-Z0-9]/)) {
+        regions.push({
+          type: 'function_parameter',
+          value: parameter,
+          startIndex: match.index + functionName.length + 2, // 跳过 "\function{"
+          endIndex: match.index + functionName.length + 2 + parameter.length,
+          key: `func_param_${match.index}`,
+          originalLatex: match[0],
+          functionName: functionName,
+        })
+        console.log(`添加函数参数区域: ${parameter}, 原始LaTeX: ${match[0]}`)
+      }
+    }
+
+    // 处理圆括号格式的函数
+    while ((match = functionPattern2.exec(latex)) !== null) {
+      const functionName = match[1]
+      const parameter = match[2]
+
+      console.log(`找到圆括号函数: ${functionName}(${parameter})`)
+
+      // 检查参数是否包含可编辑内容
+      if (parameter.match(/[a-zA-Z0-9]/)) {
+        regions.push({
+          type: 'function_parameter',
+          value: parameter,
+          startIndex: match.index + functionName.length + 1, // 跳过 "\function("
+          endIndex: match.index + functionName.length + 1 + parameter.length,
+          key: `func_param_${match.index}`,
+          originalLatex: match[0],
+          functionName: functionName,
+        })
+        console.log(`添加函数参数区域: ${parameter}, 原始LaTeX: ${match[0]}`)
+      }
+    }
+
+    // 2. 分数中的分子和分母 - 大括号
+    const fractionPattern = /\\frac\{([^}]+)\}\{([^}]+)\}/g
+    while ((match = fractionPattern.exec(latex)) !== null) {
+      const numerator = match[1]
+      const denominator = match[2]
+
+      console.log(`找到分数: 分子="${numerator}", 分母="${denominator}"`)
+
+      // 分子
+      if (numerator.match(/[a-zA-Z0-9]/)) {
+        regions.push({
+          type: 'fraction_numerator',
+          value: numerator,
+          startIndex: match.index + 6, // 跳过 "\frac{"
+          endIndex: match.index + 6 + numerator.length,
+          key: `frac_num_${match.index}`,
+          originalLatex: match[0],
+          fractionType: 'numerator',
+        })
+        console.log(`添加分数分子区域: ${numerator}, 原始LaTeX: ${match[0]}`)
+      }
+
+      // 分母
+      if (denominator.match(/[a-zA-Z0-9]/)) {
+        regions.push({
+          type: 'fraction_denominator',
+          value: denominator,
+          startIndex: match.index + 6 + numerator.length + 2, // 跳过 "\frac{...}{"
+          endIndex: match.index + 6 + numerator.length + 2 + denominator.length,
+          key: `frac_den_${match.index}`,
+          originalLatex: match[0],
+          fractionType: 'denominator',
+        })
+        console.log(`添加分数分母区域: ${denominator}, 原始LaTeX: ${match[0]}`)
+      }
+    }
+
+    // 3. 根号中的内容 - 大括号
+    const sqrtPattern = /\\sqrt\{([^}]+)\}/g
+    while ((match = sqrtPattern.exec(latex)) !== null) {
+      const content = match[1]
+
+      console.log(`找到根号: \\sqrt{${content}}`)
+
+      if (content.match(/[a-zA-Z0-9]/)) {
+        regions.push({
+          type: 'sqrt_content',
+          value: content,
+          startIndex: match.index + 6, // 跳过 "\sqrt{"
+          endIndex: match.index + 6 + content.length,
+          key: `sqrt_${match.index}`,
+          originalLatex: match[0],
+        })
+        console.log(`添加根号内容区域: ${content}, 原始LaTeX: ${match[0]}`)
+      }
+    }
+
+    // 4. 下标内容 - 大括号
+    const subscriptPattern = /_\{([^}]+)\}/g
+    while ((match = subscriptPattern.exec(latex)) !== null) {
+      const content = match[1]
+
+      console.log(`找到下标: _{${content}}`)
+
+      if (content.match(/[a-zA-Z0-9]/)) {
+        regions.push({
+          type: 'subscript',
+          value: content,
+          startIndex: match.index + 2, // 跳过 "_{"
+          endIndex: match.index + 2 + content.length,
+          key: `sub_${match.index}`,
+          originalLatex: match[0],
+        })
+        console.log(`添加下标区域: ${content}, 原始LaTeX: ${match[0]}`)
+      }
+    }
+
+    // 5. 上标内容 - 大括号
+    const superscriptPattern = /\^\{([^}]+)\}/g
+    while ((match = superscriptPattern.exec(latex)) !== null) {
+      const content = match[1]
+
+      console.log(`找到上标: ^{${content}}`)
+
+      if (content.match(/[a-zA-Z0-9]/)) {
+        regions.push({
+          type: 'superscript',
+          value: content,
+          startIndex: match.index + 2, // 跳过 "^{"
+          endIndex: match.index + 2 + content.length,
+          key: `sup_${match.index}`,
+          originalLatex: match[0],
+        })
+        console.log(`添加上标区域: ${content}, 原始LaTeX: ${match[0]}`)
+      }
+    }
+
+    // 6. 积分上下限 - 大括号
+    const integralPattern = /\\int_\{([^}]+)\}\^\{([^}]+)\}/g
+    while ((match = integralPattern.exec(latex)) !== null) {
+      const lower = match[1]
+      const upper = match[2]
+
+      // 下限
+      if (lower.match(/[a-zA-Z0-9]/)) {
+        regions.push({
+          type: 'integral_lower',
+          value: lower,
+          startIndex: match.index + 6, // 跳过 "\int_{"
+          endIndex: match.index + 6 + lower.length,
+          key: `int_lower_${match.index}`,
+          originalLatex: match[0],
+        })
+        console.log(`添加积分下限区域: ${lower}`)
+      }
+
+      // 上限
+      if (upper.match(/[a-zA-Z0-9]/)) {
+        regions.push({
+          type: 'integral_upper',
+          value: upper,
+          startIndex: match.index + 6 + lower.length + 3, // 跳过 "\int_{...}^{"
+          endIndex: match.index + 6 + lower.length + 3 + upper.length,
+          key: `int_upper_${match.index}`,
+          originalLatex: match[0],
+        })
+        console.log(`添加积分上限区域: ${upper}`)
+      }
+    }
+
+    // 7. 矩阵元素 - 大括号（暂时注释掉，因为s标志兼容性问题）
+    // const matrixPattern = /\\begin\{matrix\}(.*?)\\end\{matrix\}/gs
+    // while ((match = matrixPattern.exec(latex)) !== null) {
+    //   const matrixContent = match[1]
+    //   // 这里可以进一步解析矩阵内容，识别 & 分隔的元素
+    //   console.log(`找到矩阵内容: ${matrixContent}`)
+    //   // TODO: 可以添加矩阵元素的识别逻辑
+    // }
+
+    console.log('基于括号识别完成，可编辑区域数量:', regions.length)
+    console.log('识别到的可编辑区域:', regions)
+    return regions
+  }
+
+  // 添加编辑热区
+  private addEditableHotspots(element: HTMLElement, latex: string): void {
+    console.log('开始添加编辑热区，可编辑区域数量:', this.editableRegions.length)
+
+    // 为每个可编辑区域添加点击事件
+    this.editableRegions.forEach((region, index) => {
+      console.log(`处理区域 ${index}:`, region)
+      const targetElement = this.findElementByText(element, region.value)
+      if (targetElement) {
+        console.log(`找到元素 ${index}:`, targetElement)
+        this.makeElementEditable(targetElement, region)
+      } else {
+        console.warn(`未找到元素 ${index}:`, region)
+      }
+    })
+  }
+
+  // 查找包含指定文本的元素 - 改进版本
+  private findElementByText(rootElement: HTMLElement, text: string): HTMLElement | null {
+    console.log(`查找文本: "${text}"`)
+
+    // 方法1: 使用 TreeWalker 查找文本节点，但更精确地匹配
+    const walker = document.createTreeWalker(rootElement, NodeFilter.SHOW_TEXT, null)
+
+    let node
+    while ((node = walker.nextNode())) {
+      if (node.textContent && node.textContent.trim() === text) {
+        console.log(`找到精确文本节点: "${node.textContent}"`)
+        const parent = node.parentElement as HTMLElement
+        if (parent) {
+          console.log(`返回父元素:`, parent)
+          return parent
+        }
+      }
+    }
+
+    // 方法2: 如果精确匹配失败，尝试包含匹配，但排除函数名
+    console.log('精确匹配未找到，尝试包含匹配...')
+    const allElements = rootElement.querySelectorAll('*')
+    for (let i = 0; i < allElements.length; i++) {
+      const el = allElements[i] as HTMLElement
+      if (el.textContent && el.textContent.trim() === text && el.children.length === 0) {
+        // 检查这个元素是否已经被标记为可编辑（避免重复处理）
+        if (!el.hasAttribute('data-editable')) {
+          console.log(`包含匹配找到元素:`, el)
+          return el
+        }
+      }
+    }
+
+    // 方法3: 查找未被标记为可编辑的元素
+    for (let i = 0; i < allElements.length; i++) {
+      const el = allElements[i] as HTMLElement
+      if (el.textContent && el.textContent.includes(text) && el.children.length === 0) {
+        // 确保这个元素还没有被处理过
+        if (!el.hasAttribute('data-editable')) {
+          console.log(`模糊匹配找到未处理元素:`, el)
+          return el
+        }
+      }
+    }
+
+    console.warn(`未找到包含文本 "${text}" 的未处理元素`)
+    return null
+  }
+
+  // 使元素可编辑 - 改进版本
+  private makeElementEditable(element: HTMLElement, region: EditableRegion): void {
+    console.log(`使元素可编辑:`, element, region)
+
+    // 添加可编辑标识
+    element.setAttribute('data-editable', 'true')
+    element.setAttribute('data-region-key', region.key)
+
+    // 使用CSS类而不是内联样式，避免与KaTeX样式冲突
+    element.classList.add('formula-editable-element')
+
+    // 添加点击编辑事件
+    element.addEventListener('click', e => {
+      e.preventDefault()
+      e.stopPropagation()
+      console.log(`点击编辑元素:`, region)
+      this.editValue(region, element)
+    })
+
+    // 添加提示信息
+    element.title = `点击编辑: ${region.value}`
+
+    console.log(`元素已设置为可编辑:`, element)
+  }
+
+  // 编辑值 - 直接在预览区显示可编辑文本框
+  private editValue(region: EditableRegion, element: HTMLElement): void {
+    console.log(`开始编辑值:`, region, element)
+
+    // 创建可编辑的文本框
+    const input = document.createElement('input')
+    input.type = 'text'
+    input.value = region.value
+    input.className = 'formula-edit-input'
+
+    // 设置输入框样式，使其看起来像公式的一部分
+    input.style.cssText = `
+      border: 2px solid #1890ff;
+      border-radius: 4px;
+      padding: 2px 4px;
+      font-size: inherit;
+      font-family: inherit;
+      background: white;
+      outline: none;
+      min-width: 20px;
+      text-align: center;
+      position: absolute;
+      z-index: 1000;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    `
+
+    // 更精确的定位计算
+    const elementRect = element.getBoundingClientRect()
+    const previewArea = this.$previewArea![0] as HTMLElement
+    const previewRect = previewArea.getBoundingClientRect()
+
+    console.log('元素位置:', elementRect)
+    console.log('预览区域位置:', previewRect)
+
+    // 计算相对于预览区域的坐标
+    const relativeLeft = elementRect.left - previewRect.left
+    const relativeTop = elementRect.top - previewRect.top
+
+    console.log('相对坐标:', { left: relativeLeft, top: relativeTop })
+
+    // 设置输入框位置和尺寸
+    input.style.left = `${relativeLeft}px`
+    input.style.top = `${relativeTop}px`
+    input.style.width = `${Math.max(elementRect.width, 30)}px`
+    input.style.height = `${elementRect.height}px`
+
+    // 确保预览区域是相对定位，这样绝对定位的输入框才能正确定位
+    if (getComputedStyle(previewArea).position === 'static') {
+      previewArea.style.position = 'relative'
+    }
+
+    // 将输入框添加到预览区域
+    previewArea.appendChild(input)
+
+    // 聚焦并选中文本
+    input.focus()
+    input.select()
+
+    console.log(`输入框已创建并定位:`, input)
+    console.log(`输入框最终位置:`, {
+      left: input.style.left,
+      top: input.style.top,
+      width: input.style.width,
+      height: input.style.height,
+    })
+
+    // 处理输入完成
+    const handleComplete = () => {
+      const newValue = input.value.trim()
+      console.log(`编辑完成，新值: "${newValue}"`)
+
+      if (newValue && newValue !== region.value) {
+        // 更新LaTeX
+        this.updateLatex(region, newValue)
+      }
+
+      // 移除输入框
+      if (input.parentNode) {
+        input.parentNode.removeChild(input)
+      }
+
+      console.log(`输入框已移除`)
+    }
+
+    // 回车键完成编辑
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        console.log(`按回车键完成编辑`)
+        handleComplete()
+      } else if (e.key === 'Escape') {
+        console.log(`按ESC键取消编辑`)
+        // 取消编辑，移除输入框
+        if (input.parentNode) {
+          input.parentNode.removeChild(input)
+        }
+      }
+    })
+
+    // 失去焦点时完成编辑
+    input.addEventListener('blur', () => {
+      console.log(`输入框失去焦点，完成编辑`)
+      // 延迟处理，避免与点击事件冲突
+      setTimeout(() => {
+        if (input.parentNode) {
+          handleComplete()
+        }
+      }, 100)
+    })
+
+    // 防止输入框被点击事件影响
+    input.addEventListener('click', e => {
+      e.stopPropagation()
+    })
+
+    console.log(`编辑事件监听器已设置`)
+  }
+
+  // 更新LaTeX - 修复版本
+  private updateLatex(region: EditableRegion, newValue: string): void {
+    console.log(`开始更新LaTeX:`, { region, newValue })
+
+    let newLatex = this.currentLatex
+    let updateSuccess = false
+
+    try {
+      if (region.originalLatex) {
+        // 对于有原始LaTeX的结构（如函数参数、分数等），需要替换整个结构
+        const oldContent = region.originalLatex
+        let newContent: string
+
+        // 根据类型构建新的内容
+        switch (region.type) {
+          case 'function_parameter':
+            if (region.functionName) {
+              // 函数参数：\function{old} -> \function{new}
+              console.log(
+                `更新函数参数: ${region.functionName}{${region.value}} -> ${region.functionName}{${newValue}}`
+              )
+              newContent = oldContent.replace(/\{([^}]+)\}/, `{${newValue}}`)
+            } else {
+              // 圆括号函数：\function(old) -> \function(new)
+              console.log(
+                `更新圆括号函数参数: ${oldContent} -> 替换 ${region.value} 为 ${newValue}`
+              )
+              newContent = oldContent.replace(/\(([^)]+)\)/, `(${newValue})`)
+            }
+            console.log(`函数参数更新结果: "${oldContent}" -> "${newContent}"`)
+            break
+
+          case 'fraction_numerator':
+            // 分数分子：\frac{old}{...} -> \frac{new}{...}
+            // 使用更简单的方法：找到第一个大括号内的内容并替换
+            const numMatch = oldContent.match(/\\frac\{([^}]+)\}\{([^}]+)\}/)
+            if (numMatch) {
+              newContent = oldContent.replace(
+                /\\frac\{[^}]+\}\{([^}]+)\}/,
+                `\\frac{${newValue}}{$1}`
+              )
+            } else {
+              // 备用方案：直接替换
+              newContent = oldContent.replace(region.value, newValue)
+            }
+            break
+
+          case 'fraction_denominator':
+            // 分数分母：\frac{...}{old} -> \frac{...}{new}
+            // 使用更简单的方法：找到第二个大括号内的内容并替换
+            const denMatch = oldContent.match(/\\frac\{([^}]+)\}\{([^}]+)\}/)
+            if (denMatch) {
+              newContent = oldContent.replace(
+                /\\frac\{([^}]+)\}\{[^}]+\}/,
+                `\\frac{$1}{${newValue}}`
+              )
+            } else {
+              // 备用方案：直接替换
+              newContent = oldContent.replace(region.value, newValue)
+            }
+            break
+
+          case 'sqrt_content':
+            // 根号内容：\sqrt{old} -> \sqrt{new}
+            console.log(`更新根号内容: \\sqrt{${region.value}} -> \\sqrt{${newValue}}`)
+            newContent = oldContent.replace(/\{([^}]+)\}/, `{${newValue}}`)
+            console.log(`根号更新结果: "${oldContent}" -> "${newContent}"`)
+            break
+
+          case 'subscript':
+            // 下标内容：_{old} -> _{new}
+            console.log(`更新下标内容: _{${region.value}} -> _{${newValue}}`)
+            newContent = oldContent.replace(/\{([^}]+)\}/, `{${newValue}}`)
+            console.log(`下标更新结果: "${oldContent}" -> "${newContent}"`)
+            break
+
+          case 'superscript':
+            // 上标内容：^{old} -> ^{new}
+            console.log(`更新上标内容: ^{${region.value}} -> ^{${newValue}}`)
+            newContent = oldContent.replace(/\{([^}]+)\}/, `{${newValue}}`)
+            console.log(`上标更新结果: "${oldContent}" -> "${newContent}"`)
+            break
+
+          case 'integral_lower':
+            // 积分下限：\int_{old}^{...} -> \int_{new}^{...}
+            newContent = oldContent.replace(/_\{([^}]+)\}/, `_{${newValue}}`)
+            break
+
+          case 'integral_upper':
+            // 积分上限：\int_{...}^{old} -> \int_{...}^{new}
+            newContent = oldContent.replace(/\^\{([^}]+)\}/, `^{${newValue}}`)
+            break
+
+          default:
+            // 默认情况：直接替换
+            newContent = oldContent.replace(region.value, newValue)
+        }
+
+        console.log(`替换内容: "${oldContent}" -> "${newContent}"`)
+        newLatex = newLatex.replace(oldContent, newContent)
+        updateSuccess = true
+      } else {
+        // 对于没有原始LaTeX的结构，直接替换
+        newLatex =
+          newLatex.substring(0, region.startIndex) + newValue + newLatex.substring(region.endIndex)
+        updateSuccess = true
+      }
+
+      if (updateSuccess) {
+        // 更新当前LaTeX
+        this.currentLatex = newLatex
+        console.log(`LaTeX更新成功: "${newLatex}"`)
+
+        // 重新渲染可编辑预览
+        this.renderEditablePreview(newLatex)
+
+        // 触发LaTeX更新事件（通知外部组件）
+        this.triggerLatexUpdate(newLatex)
+
+        // 显示成功提示
+        this.showUpdateSuccess(newValue)
+      }
+    } catch (error) {
+      console.error('LaTeX更新失败:', error)
+      this.showUpdateError(error)
+    }
+  }
+
+  // 显示更新成功提示
+  private showUpdateSuccess(newValue: string): void {
+    if (this.$errorArea && this.$errorArea[0]) {
+      const errorArea = this.$errorArea[0] as HTMLElement
+      errorArea.style.display = 'block'
+      errorArea.style.background = '#f6ffed'
+      errorArea.style.border = '1px solid #b7eb8f'
+      errorArea.style.color = '#52c41a'
+      errorArea.textContent = `更新成功: ${newValue}`
+
+      // 3秒后自动隐藏
+      setTimeout(() => {
+        if (errorArea.parentNode) {
+          errorArea.style.display = 'none'
+        }
+      }, 3000)
+    }
+  }
+
+  // 显示更新错误提示
+  private showUpdateError(error: any): void {
+    if (this.$errorArea && this.$errorArea[0]) {
+      const errorArea = this.$errorArea[0] as HTMLElement
+      errorArea.style.display = 'block'
+      errorArea.style.background = '#fff2f0'
+      errorArea.style.border = '1px solid #ffccc7'
+      errorArea.style.color = '#ff4d4f'
+      errorArea.textContent = `更新失败: ${error.message || '未知错误'}`
+    }
+  }
+
+  // 触发LaTeX更新事件 - 改进版本
+  private triggerLatexUpdate(newLatex: string): void {
+    console.log(`触发LaTeX更新事件:`, newLatex)
+
+    try {
+      // 创建自定义事件
+      const event = new CustomEvent('latexUpdated', {
+        detail: {
+          latex: newLatex,
+          timestamp: Date.now(),
+          source: 'formula-preview',
+        },
+      })
+
+      // 在预览容器上触发事件
+      if (this.$container && this.$container[0]) {
+        this.$container[0].dispatchEvent(event)
+        console.log(`LaTeX更新事件已触发在容器上`)
+      }
+
+      // 同时在预览区域上触发事件（双重保险）
+      if (this.$previewArea && this.$previewArea[0]) {
+        this.$previewArea[0].dispatchEvent(event)
+        console.log(`LaTeX更新事件已触发在预览区域上`)
+      }
+
+      // 尝试直接更新输入框（如果能够找到的话）
+      this.tryUpdateInputField(newLatex)
+
+      // 备用方案：尝试通过全局事件传递
+      this.tryGlobalEventDispatch(newLatex)
+    } catch (error) {
+      console.error('触发LaTeX更新事件失败:', error)
+    }
+  }
+
+  // 备用方案：通过全局事件传递
+  private tryGlobalEventDispatch(newLatex: string): void {
+    try {
+      console.log('尝试通过全局事件传递LaTeX更新')
+
+      // 在document上触发事件
+      const globalEvent = new CustomEvent('globalLatexUpdated', {
+        detail: {
+          latex: newLatex,
+          timestamp: Date.now(),
+          source: 'formula-preview',
+        },
+        bubbles: true, // 允许事件冒泡
+        cancelable: true,
+      })
+
+      document.dispatchEvent(globalEvent)
+      console.log('全局LaTeX更新事件已触发')
+
+      // 在window上触发事件
+      const windowEvent = new CustomEvent('windowLatexUpdated', {
+        detail: {
+          latex: newLatex,
+          timestamp: Date.now(),
+          source: 'formula-preview',
+        },
+      })
+
+      window.dispatchEvent(windowEvent)
+      console.log('窗口LaTeX更新事件已触发')
+    } catch (error) {
+      console.error('全局事件传递失败:', error)
+    }
+  }
+
+  // 尝试直接更新输入框 - 简化版本
+  private tryUpdateInputField(newLatex: string): void {
+    try {
+      console.log(`开始查找并更新输入框，新LaTeX: "${newLatex}"`)
+
+      // 立即尝试查找
+      const found = this.findAndUpdateInputField(newLatex)
+
+      if (!found) {
+        console.log('立即查找失败，启动延迟查找...')
+
+        // 延迟查找：可能DOM还没有完全渲染
+        setTimeout(() => {
+          console.log('延迟查找开始...')
+          this.findAndUpdateInputField(newLatex)
+        }, 100)
+
+        // 再次延迟查找：双重保险
+        setTimeout(() => {
+          console.log('第二次延迟查找开始...')
+          this.findAndUpdateInputField(newLatex)
+        }, 500)
+      }
+    } catch (error) {
+      console.error('直接更新输入框失败:', error)
+    }
+  }
+
+  // 查找并更新输入框的核心逻辑
+  private findAndUpdateInputField(newLatex: string): boolean {
+    try {
+      // 方法1: 直接查找所有textarea和input元素
+      const allInputs = document.querySelectorAll('textarea, input[type="text"]')
+      console.log(`找到 ${allInputs.length} 个输入元素`)
+
+      let foundField = false
+
+      for (let i = 0; i < allInputs.length; i++) {
+        const field = allInputs[i] as HTMLInputElement | HTMLTextAreaElement
+        const fieldValue = field.value || ''
+
+        console.log(`检查输入框 ${i}:`, {
+          tagName: field.tagName,
+          value: fieldValue.substring(0, 50), // 只显示前50个字符
+          element: field,
+        })
+
+        // 检查是否包含LaTeX语法特征
+        if (fieldValue.includes('\\') || fieldValue.includes('{') || fieldValue.includes('}')) {
+          console.log(`找到LaTeX输入框 ${i}:`, field)
+
+          // 更新输入框的值
+          const oldValue = field.value
+          field.value = newLatex
+
+          // 触发多个事件，确保变化被捕获
+          const events = ['input', 'change', 'keyup', 'paste']
+          events.forEach(eventType => {
+            const event = new Event(eventType, { bubbles: true })
+            field.dispatchEvent(event)
+          })
+
+          console.log(`已更新输入框: "${oldValue}" -> "${newLatex}"`)
+          foundField = true
+          break
+        }
+      }
+
+      // 方法2: 如果方法1失败，尝试查找包含特定内容的输入框
+      if (!foundField) {
+        console.log('方法1失败，尝试方法2: 查找包含当前LaTeX的输入框')
+
+        for (let i = 0; i < allInputs.length; i++) {
+          const field = allInputs[i] as HTMLInputElement | HTMLTextAreaElement
+          const fieldValue = field.value || ''
+
+          // 检查是否包含当前LaTeX的一部分
+          if (this.currentLatex && fieldValue.includes(this.currentLatex.substring(0, 5))) {
+            console.log(`通过内容匹配找到输入框:`, field)
+
+            const oldValue = field.value
+            field.value = newLatex
+
+            // 触发事件
+            const events = ['input', 'change', 'keyup', 'paste']
+            events.forEach(eventType => {
+              const event = new Event(eventType, { bubbles: true })
+              field.dispatchEvent(event)
+            })
+
+            console.log(`已通过内容匹配更新输入框: "${oldValue}" -> "${newLatex}"`)
+            foundField = true
+            break
+          }
+        }
+      }
+
+      // 方法3: 如果前两种方法都失败，尝试查找任何包含LaTeX的输入框
+      if (!foundField) {
+        console.log('前两种方法都失败，尝试方法3: 查找任何LaTeX输入框')
+
+        for (let i = 0; i < allInputs.length; i++) {
+          const field = allInputs[i] as HTMLInputElement | HTMLTextAreaElement
+          const fieldValue = field.value || ''
+
+          // 检查是否包含常见的LaTeX命令
+          const latexCommands = [
+            '\\frac',
+            '\\sqrt',
+            '\\exp',
+            '\\sin',
+            '\\cos',
+            '\\tan',
+            '\\log',
+            '\\ln',
+          ]
+          const hasLatexCommand = latexCommands.some(cmd => fieldValue.includes(cmd))
+
+          if (hasLatexCommand) {
+            console.log(`通过LaTeX命令匹配找到输入框:`, field)
+
+            const oldValue = field.value
+            field.value = newLatex
+
+            // 触发事件
+            const events = ['input', 'change', 'keyup', 'paste']
+            events.forEach(eventType => {
+              const event = new Event(eventType, { bubbles: true })
+              field.dispatchEvent(event)
+            })
+
+            console.log(`已通过LaTeX命令匹配更新输入框: "${oldValue}" -> "${newLatex}"`)
+            foundField = true
+            break
+          }
+        }
+      }
+
+      // 方法4: 如果前三种方法都失败，尝试查找任何包含反斜杠的输入框
+      if (!foundField) {
+        console.log('前三种方法都失败，尝试方法4: 查找任何包含反斜杠的输入框')
+
+        for (let i = 0; i < allInputs.length; i++) {
+          const field = allInputs[i] as HTMLInputElement | HTMLTextAreaElement
+          const fieldValue = field.value || ''
+
+          if (fieldValue.includes('\\')) {
+            console.log(`通过反斜杠匹配找到输入框:`, field)
+
+            const oldValue = field.value
+            field.value = newLatex
+
+            // 触发事件
+            const events = ['input', 'change', 'keyup', 'paste']
+            events.forEach(eventType => {
+              const event = new Event(eventType, { bubbles: true })
+              field.dispatchEvent(event)
+            })
+
+            console.log(`已通过反斜杠匹配更新输入框: "${oldValue}" -> "${newLatex}"`)
+            foundField = true
+            break
+          }
+        }
+      }
+
+      if (!foundField) {
+        console.warn('未能找到LaTeX输入框进行更新')
+        console.log(
+          '当前页面所有输入框:',
+          Array.from(allInputs).map((el, i) => ({
+            index: i,
+            tagName: el.tagName,
+            value: (el as HTMLInputElement | HTMLTextAreaElement).value?.substring(0, 100),
+          }))
+        )
+      } else {
+        console.log('输入框更新成功！')
+      }
+
+      return foundField
+    } catch (error) {
+      console.error('查找并更新输入框失败:', error)
+      return false
+    }
+  }
+
   private addPreviewStyles(): void {
     // 检查是否已经添加了样式
     if (document.getElementById('formula-preview-styles')) {
@@ -897,6 +1842,26 @@ export class FormulaPreview {
         border-bottom: 1px solid #e0e0e0;
         padding-bottom: 8px;
       }
+      .preview-title-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+      }
+      .edit-mode-toggle {
+        padding: 8px 12px;
+        background: #1890ff;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 500;
+        transition: background-color 0.2s;
+      }
+      .edit-mode-toggle:hover {
+        background: #40a9ff;
+      }
       .preview-area {
         flex: 1;
         padding: 20px;
@@ -909,6 +1874,7 @@ export class FormulaPreview {
         min-height: 200px;
         margin-bottom: 10px;
         overflow: auto;
+        position: relative; /* 确保支持绝对定位的子元素 */
       }
       .preview-placeholder {
         color: #999;
@@ -956,6 +1922,42 @@ export class FormulaPreview {
       /* 也可以通过控制span元素来设置大小 */
       .preview-area span {
         font-size: 40px !important;  /* 备用方案 */
+      }
+      
+      /* 编辑模式相关样式 */
+      .formula-edit-input {
+        border: 2px solid #1890ff !important;
+        border-radius: 4px !important;
+        padding: 2px 4px !important;
+        font-size: inherit !important;
+        font-family: inherit !important;
+        background: white !important;
+        outline: none !important;
+        min-width: 20px !important;
+        text-align: center !important;
+        position: absolute !important;
+        z-index: 1000 !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+      }
+      
+      /* 可编辑元素的基础样式 */
+      .formula-editable-element {
+        cursor: pointer !important;
+        background-color: rgba(24, 144, 255, 0.1) !important;
+        border-radius: 2px !important;
+        padding: 1px 2px !important;
+        transition: background-color 0.2s !important;
+        position: relative !important;
+      }
+      
+      /* 可编辑元素的悬停效果 */
+      .formula-editable-element:hover {
+        background-color: rgba(24, 144, 255, 0.2) !important;
+      }
+      
+      /* 可编辑元素的激活状态 */
+      .formula-editable-element:active {
+        background-color: rgba(24, 144, 255, 0.3) !important;
       }
     `
     document.head.appendChild(style)
