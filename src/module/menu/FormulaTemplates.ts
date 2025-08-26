@@ -178,28 +178,28 @@ export const FORMULA_CATEGORIES: FormulaCategory[] = [
     name: '常用',
     icon: FRACTION_SVG,
     templates: [
-  {
-    name: 'fraction',
-    icon: FRACTION_SVG,
-    latex: '\\frac{a}{b}',
+      {
+        name: 'fraction',
+        icon: FRACTION_SVG,
+        latex: '\\frac{a}{b}',
         description: '分数',
-  },
-  {
-    name: 'sqrt',
-    icon: SQRT_SVG,
-    latex: '\\sqrt{x}',
+      },
+      {
+        name: 'sqrt',
+        icon: SQRT_SVG,
+        latex: '\\sqrt{x}',
         description: '开方',
-  },
-  {
-    name: 'exp',
-    icon: EXP_SVG,
-    latex: 'e^{x}',
+      },
+      {
+        name: 'exp',
+        icon: EXP_SVG,
+        latex: 'x^{n}',
         description: '指数',
-  },
-  {
-    name: 'limit',
-    icon: LIMIT_SVG,
-    latex: '\\lim_{x \\to \\infty}',
+      },
+      {
+        name: 'limit',
+        icon: LIMIT_SVG,
+        latex: '\\lim_{x \\to \\infty}',
         description: '极限',
       },
       {
@@ -221,12 +221,12 @@ export const FORMULA_CATEGORIES: FormulaCategory[] = [
     name: '函数',
     icon: TRIG_SVG,
     templates: [
-  {
-    name: 'trig',
-    icon: TRIG_SVG,
-    latex: '\\sin(x)',
-    description: '三角函数',
-    submenu: [
+      {
+        name: 'trig',
+        icon: TRIG_SVG,
+        latex: '\\sin(x)',
+        description: '三角函数',
+        submenu: [
           { name: 'sin', icon: SIN_SVG, latex: '\\sin(x)', description: 'sin' },
           { name: 'cos', icon: COS_SVG, latex: '\\cos(x)', description: 'cos' },
           { name: 'tan', icon: TAN_SVG, latex: '\\tan(x)', description: 'tan' },
@@ -431,10 +431,10 @@ export class FormulaTemplatePanel {
     }
 
     const $panel = $('<div class="formula-template-panel"></div>')
-    
+
     // 添加样式到页面head
     this.addStyles()
-    
+
     // 添加标题
     const $title = $('<div class="template-title">公式模板</div>')
     $panel.append($title)
@@ -487,38 +487,38 @@ export class FormulaTemplatePanel {
 
       // 为每个分类创建按钮
       category.templates.forEach(template => {
-      if (template.submenu) {
-        // 创建带下拉菜单的按钮组
+        if (template.submenu) {
+          // 创建带下拉菜单的按钮组
           const $buttonGroup = $(
             '<div class="template-button-group" data-template="' + template.name + '"></div>'
           )
-        
-        // 主按钮
-        const $mainButton = $(`
+
+          // 主按钮
+          const $mainButton = $(`
           <button class="template-button has-submenu" data-latex="${template.latex}" title="${template.description}">
             ${template.icon}
             <span class="template-name">${template.description}</span>
             <span class="dropdown-arrow">${DROPDOWN_SVG}</span>
           </button>
         `)
-        
-        // 下拉菜单
-        const $submenu = $('<div class="template-submenu"></div>')
-        template.submenu.forEach(subTemplate => {
-          const $subButton = $(`
+
+          // 下拉菜单
+          const $submenu = $('<div class="template-submenu"></div>')
+          template.submenu.forEach(subTemplate => {
+            const $subButton = $(`
             <button class="template-sub-button" data-latex="${subTemplate.latex}" title="${subTemplate.description}">
               ${subTemplate.description}
             </button>
           `)
-          $submenu.append($subButton)
-        })
-        
-        $buttonGroup.append($mainButton)
-        $buttonGroup.append($submenu)
+            $submenu.append($subButton)
+          })
+
+          $buttonGroup.append($mainButton)
+          $buttonGroup.append($submenu)
           $buttonsContainer.append($buttonGroup)
-      } else {
-        // 普通按钮
-        const $button = $(`
+        } else {
+          // 普通按钮
+          const $button = $(`
           <button class="template-button" data-latex="${template.latex}" title="${template.description}">
             ${template.icon}
             <span class="template-name">${template.description}</span>
@@ -534,7 +534,7 @@ export class FormulaTemplatePanel {
     $tabsContainer.append($tabsNav)
     $tabsContainer.append($tabsContent)
     $panel.append($tabsContainer)
-    
+
     this.$panel = $panel
     return $panel
   }
