@@ -152,6 +152,23 @@ import {
   COT_SVG,
   SEC_SVG,
   CSC_SVG,
+  // 上标符号
+  SUPERSCRIPT_SVG,
+  OVERLINE_SVG,
+  PRIME_SVG,
+  DOUBLE_PRIME_SVG,
+  TRIPLE_PRIME_SVG,
+  DOT_SVG,
+  DOUBLE_DOT_SVG,
+  TILDE_SVG,
+  HAT_SVG,
+  VEC_SVG,
+  BAR_SVG,
+  CHECK_SVG,
+  BREVE_SVG,
+  RING_SVG,
+  // 清空按钮
+  CLEAR_SVG,
 } from '../../constants/icon-svg'
 import { IDomEditor } from '@wangeditor/editor'
 import { FormulaElement } from '../custom-types'
@@ -214,6 +231,52 @@ export const FORMULA_CATEGORIES: FormulaCategory[] = [
         latex: '\\begin{pmatrix}\na & b \\\\\nc & d\n\\end{pmatrix}',
         description: '矩阵',
       },
+      {
+        name: 'subscript',
+        icon: `<span class="math-symbol">x_i</span>`,
+        latex: 'x_{i}',
+        description: '下标',
+      },
+    ],
+  },
+  {
+    id: 'superscript',
+    name: '上标',
+    icon: SUPERSCRIPT_SVG,
+    templates: [
+      {
+        name: 'overline',
+        icon: OVERLINE_SVG,
+        latex: '\\overline{x}',
+        description: 'x上横线（平均值）',
+      },
+      { name: 'prime', icon: PRIME_SVG, latex: 'x^{\\prime}', description: 'x的导数（一撇）' },
+      {
+        name: 'double_prime',
+        icon: DOUBLE_PRIME_SVG,
+        latex: 'x^{\\prime\\prime}',
+        description: 'x的二阶导数（两撇）',
+      },
+      {
+        name: 'triple_prime',
+        icon: TRIPLE_PRIME_SVG,
+        latex: 'x^{\\prime\\prime\\prime}',
+        description: 'x的三阶导数（三撇）',
+      },
+      { name: 'dot', icon: DOT_SVG, latex: '\\dot{x}', description: 'x的一阶导数（点）' },
+      {
+        name: 'double_dot',
+        icon: DOUBLE_DOT_SVG,
+        latex: '\\ddot{x}',
+        description: 'x的二阶导数（双点）',
+      },
+      { name: 'tilde', icon: TILDE_SVG, latex: '\\tilde{x}', description: 'x的波浪号' },
+      { name: 'hat', icon: HAT_SVG, latex: '\\hat{x}', description: 'x的帽子符号' },
+      { name: 'vec', icon: VEC_SVG, latex: '\\vec{x}', description: 'x的向量符号' },
+      { name: 'bar', icon: BAR_SVG, latex: '\\bar{x}', description: 'x的横线' },
+      { name: 'check', icon: CHECK_SVG, latex: '\\check{x}', description: 'x的反向帽子' },
+      { name: 'breve', icon: BREVE_SVG, latex: '\\breve{x}', description: 'x的短音符' },
+      { name: 'ring', icon: RING_SVG, latex: '\\mathring{x}', description: 'x的圆圈符号' },
     ],
   },
   {
@@ -233,11 +296,47 @@ export const FORMULA_CATEGORIES: FormulaCategory[] = [
           { name: 'cot', icon: COT_SVG, latex: '\\cot(x)', description: 'cot' },
           { name: 'sec', icon: SEC_SVG, latex: '\\sec(x)', description: 'sec' },
           { name: 'csc', icon: CSC_SVG, latex: '\\csc(x)', description: 'csc' },
+          {
+            name: 'arcsin',
+            icon: `<span class="math-symbol">arcsin</span>`,
+            latex: '\\arcsin(x)',
+            description: 'arcsin',
+          },
+          {
+            name: 'arccos',
+            icon: `<span class="math-symbol">arccos</span>`,
+            latex: '\\arccos(x)',
+            description: 'arccos',
+          },
+          {
+            name: 'arctan',
+            icon: `<span class="math-symbol">arctan</span>`,
+            latex: '\\arctan(x)',
+            description: 'arctan',
+          },
+          {
+            name: 'sinh',
+            icon: `<span class="math-symbol">sinh</span>`,
+            latex: '\\sinh(x)',
+            description: 'sinh',
+          },
+          {
+            name: 'cosh',
+            icon: `<span class="math-symbol">cosh</span>`,
+            latex: '\\cosh(x)',
+            description: 'cosh',
+          },
+          {
+            name: 'tanh',
+            icon: `<span class="math-symbol">tanh</span>`,
+            latex: '\\tanh(x)',
+            description: 'tanh',
+          },
         ],
       },
       { name: 'log', icon: LOG_SVG, latex: '\\log(x)', description: '对数' },
       { name: 'ln', icon: LN_SVG, latex: '\\ln(x)', description: '自然对数' },
-      { name: 'exp_func', icon: EXP_FUNC_SVG, latex: '\\exp(x)', description: '指数函数' },
+      { name: 'exp_func', icon: EXP_FUNC_SVG, latex: 'e^{x}', description: '指数函数' },
     ],
   },
   {
@@ -733,6 +832,25 @@ export class FormulaTemplatePanel {
       .template-button:hover .template-name {
         color: #1890ff;
       }
+      
+      /* 清空按钮特殊样式 */
+      .template-button[data-latex="CLEAR_BUTTON"] {
+        background: #fff2f0;
+        border-color: #ffccc7;
+        color: #ff4d4f;
+      }
+      .template-button[data-latex="CLEAR_BUTTON"]:hover {
+        background: #fff1f0;
+        border-color: #ff4d4f;
+        color: #cf1322;
+      }
+      .template-button[data-latex="CLEAR_BUTTON"] .math-symbol {
+        color: #ff4d4f;
+      }
+      .template-button[data-latex="CLEAR_BUTTON"]:hover .math-symbol {
+        color: #cf1322;
+      }
+      
       .dropdown-arrow {
         position: absolute;
         bottom: 1px;
@@ -993,9 +1111,9 @@ export class FormulaPreview {
 
     // 1. 函数命令中的参数 - 圆括号和大括号
     const functionPattern1 =
-      /\\(exp|log|ln|sin|cos|tan|cot|sec|csc|arcsin|arccos|arctan|arccot|arcsec|arccsc)\{([^}]+)\}/g
+      /\\(exp|log|ln|sin|cos|tan|cot|sec|csc|arcsin|arccos|arctan|arccot|arcsec|arccsc|sinh|cosh|tanh)\{([^}]+)\}/g
     const functionPattern2 =
-      /\\(exp|log|ln|sin|cos|tan|cot|sec|csc|arcsin|arccos|arctan|arccot|arcsec|arccsc)\(([^)]+)\)/g
+      /\\(exp|log|ln|sin|cos|tan|cot|sec|csc|arcsin|arccos|arctan|arccot|arcsec|arccsc|sinh|cosh|tanh)\(([^)]+)\)/g
 
     console.log('开始识别函数参数...')
     console.log('当前LaTeX字符串:', latex)
@@ -1143,7 +1261,181 @@ export class FormulaPreview {
       }
     }
 
-    // 6. 积分上下限 - 大括号
+    // 6. 上标符号中的变量 - 大括号
+    const superscriptSymbolPattern1 =
+      /\\(overline|dot|ddot|tilde|hat|vec|bar|check|breve|mathring)\{([^}]+)\}/g
+    while ((match = superscriptSymbolPattern1.exec(latex)) !== null) {
+      const symbolCommand = match[1]
+      const variable = match[2]
+
+      console.log(`找到上标符号: \\${symbolCommand}{${variable}}`)
+
+      if (variable.match(/[a-zA-Z0-9]/)) {
+        regions.push({
+          type: 'variable',
+          value: variable,
+          startIndex: match.index + symbolCommand.length + 2, // 跳过 "\command{"
+          endIndex: match.index + symbolCommand.length + 2 + variable.length,
+          key: `sup_symbol_${match.index}`,
+          originalLatex: match[0],
+        })
+        console.log(`添加上标符号变量区域: ${variable}, 原始LaTeX: ${match[0]}`)
+      }
+    }
+
+    // 6.5. 导数符号中的变量 - 如 x^{\prime}, x^{\prime\prime} 等
+    const primePattern = /([a-zA-Z])\^\{(\\(?:prime|prime\\prime|prime\\prime\\prime))\}/
+    while ((match = primePattern.exec(latex)) !== null) {
+      const variable = match[1]
+      const primeCommand = match[2]
+
+      console.log(`找到导数符号: ${variable}^{${primeCommand}}`)
+
+      regions.push({
+        type: 'variable',
+        value: variable,
+        startIndex: match.index,
+        endIndex: match.index + variable.length,
+        key: `prime_var_${match.index}`,
+        originalLatex: match[0],
+      })
+      console.log(`添加导数变量区域: ${variable}, 原始LaTeX: ${match[0]}`)
+    }
+
+    // 6.6. 求和符号中的变量 - 如 \sum_{i=1}^{n} x_i
+    const sumPattern = /\\sum_\{([^}]+)\}\^\{([^}]+)\} ([a-zA-Z_]+)/g
+    while ((match = sumPattern.exec(latex)) !== null) {
+      const lower = match[1]
+      const upper = match[2]
+      const variable = match[3]
+
+      console.log(`找到求和符号: \\sum_{${lower}}^{${upper}} ${variable}`)
+
+      // 下限
+      if (lower.match(/[a-zA-Z0-9]/)) {
+        regions.push({
+          type: 'subscript',
+          value: lower,
+          startIndex: match.index + 5, // 跳过 "\sum_{"
+          endIndex: match.index + 5 + lower.length,
+          key: `sum_lower_${match.index}`,
+          originalLatex: match[0],
+        })
+        console.log(`添加求和下限区域: ${lower}`)
+      }
+
+      // 上限
+      if (upper.match(/[a-zA-Z0-9]/)) {
+        regions.push({
+          type: 'superscript',
+          value: upper,
+          startIndex: match.index + 5 + lower.length + 3, // 跳过 "\sum_{...}^{"
+          endIndex: match.index + 5 + lower.length + 3 + upper.length,
+          key: `sum_upper_${match.index}`,
+          originalLatex: match[0],
+        })
+        console.log(`添加求和上限区域: ${upper}`)
+      }
+
+      // 变量
+      if (variable.match(/[a-zA-Z0-9]/)) {
+        regions.push({
+          type: 'variable',
+          value: variable,
+          startIndex: match.index + match[0].length - variable.length,
+          endIndex: match.index + match[0].length,
+          key: `sum_var_${match.index}`,
+          originalLatex: match[0],
+        })
+        console.log(`添加求和变量区域: ${variable}`)
+      }
+    }
+
+    // 6.7. 求积符号中的变量 - 如 \prod_{i=1}^{n} x_i
+    const prodPattern = /\\prod_\{([^}]+)\}\^\{([^}]+)\} ([a-zA-Z_]+)/g
+    while ((match = prodPattern.exec(latex)) !== null) {
+      const lower = match[1]
+      const upper = match[2]
+      const variable = match[3]
+
+      console.log(`找到求积符号: \\prod_{${lower}}^{${upper}} ${variable}`)
+
+      // 下限
+      if (lower.match(/[a-zA-Z0-9]/)) {
+        regions.push({
+          type: 'subscript',
+          value: lower,
+          startIndex: match.index + 6, // 跳过 "\prod_{"
+          endIndex: match.index + 6 + lower.length,
+          key: `prod_lower_${match.index}`,
+          originalLatex: match[0],
+        })
+        console.log(`添加求积下限区域: ${lower}`)
+      }
+
+      // 上限
+      if (upper.match(/[a-zA-Z0-9]/)) {
+        regions.push({
+          type: 'superscript',
+          value: upper,
+          startIndex: match.index + 6 + lower.length + 3, // 跳过 "\prod_{...}^{"
+          endIndex: match.index + 6 + lower.length + 3 + upper.length,
+          key: `prod_upper_${match.index}`,
+          originalLatex: match[0],
+        })
+        console.log(`添加求积上限区域: ${upper}`)
+      }
+
+      // 变量
+      if (variable.match(/[a-zA-Z0-9]/)) {
+        regions.push({
+          type: 'variable',
+          value: variable,
+          startIndex: match.index + match[0].length - variable.length,
+          endIndex: match.index + match[0].length,
+          key: `prod_var_${match.index}`,
+          originalLatex: match[0],
+        })
+        console.log(`添加求积变量区域: ${variable}`)
+      }
+    }
+
+    // 6.8. 极限符号中的变量 - 如 \lim_{x \to \infty}
+    const limitPattern = /\\lim_\{([^}]+) \\to ([^}]+)\}/g
+    while ((match = limitPattern.exec(latex)) !== null) {
+      const variable = match[1]
+      const target = match[2]
+
+      console.log(`找到极限符号: \\lim_{${variable} \\to ${target}}`)
+
+      // 变量
+      if (variable.match(/[a-zA-Z0-9]/)) {
+        regions.push({
+          type: 'variable',
+          value: variable,
+          startIndex: match.index + 5, // 跳过 "\lim_{"
+          endIndex: match.index + 5 + variable.length,
+          key: `limit_var_${match.index}`,
+          originalLatex: match[0],
+        })
+        console.log(`添加极限变量区域: ${variable}`)
+      }
+
+      // 目标值
+      if (target.match(/[a-zA-Z0-9]/)) {
+        regions.push({
+          type: 'variable',
+          value: target,
+          startIndex: match.index + 5 + variable.length + 5, // 跳过 "\lim_{... \\to "
+          endIndex: match.index + 5 + variable.length + 5 + target.length,
+          key: `limit_target_${match.index}`,
+          originalLatex: match[0],
+        })
+        console.log(`添加极限目标区域: ${target}`)
+      }
+    }
+
+    // 9. 积分上下限 - 大括号
     const integralPattern = /\\int_\{([^}]+)\}\^\{([^}]+)\}/g
     while ((match = integralPattern.exec(latex)) !== null) {
       const lower = match[1]
@@ -1176,7 +1468,7 @@ export class FormulaPreview {
       }
     }
 
-    // 7. 矩阵元素 - 大括号（暂时注释掉，因为s标志兼容性问题）
+    // 10. 矩阵元素 - 大括号（暂时注释掉，因为s标志兼容性问题）
     // const matrixPattern = /\\begin\{matrix\}(.*?)\\end\{matrix\}/gs
     // while ((match = matrixPattern.exec(latex)) !== null) {
     //   const matrixContent = match[1]
@@ -1184,6 +1476,119 @@ export class FormulaPreview {
     //   console.log(`找到矩阵内容: ${matrixContent}`)
     //   // TODO: 可以添加矩阵元素的识别逻辑
     // }
+
+    // 11. 识别独立的变量（不在括号内的变量）
+    const independentVariablePattern = /(?<![\\{\(])([a-zA-Z])(?![\\}\)])/g
+    while ((match = independentVariablePattern.exec(latex)) !== null) {
+      const variable = match[1]
+      const matchIndex = match.index
+
+      // 检查这个变量是否已经被其他规则识别过
+      const isAlreadyIdentified = regions.some(
+        region => region.startIndex <= matchIndex && region.endIndex > matchIndex
+      )
+
+      if (!isAlreadyIdentified) {
+        console.log(`找到独立变量: ${variable} 在位置 ${matchIndex}`)
+        regions.push({
+          type: 'variable',
+          value: variable,
+          startIndex: matchIndex,
+          endIndex: matchIndex + 1,
+          key: `indep_var_${matchIndex}`,
+          originalLatex: variable,
+        })
+        console.log(`添加独立变量区域: ${variable}`)
+      }
+    }
+
+    // 12. 识别上标符号中的变量（如 \overline{x}, \dot{x} 等）
+    const superscriptSymbolPattern2 =
+      /\\(overline|dot|ddot|tilde|hat|vec|bar|check|breve|mathring)\{([^}]+)\}/g
+    while ((match = superscriptSymbolPattern2.exec(latex)) !== null) {
+      const symbolCommand = match[1]
+      const variable = match[2]
+
+      console.log(`找到上标符号: \\${symbolCommand}{${variable}}`)
+
+      if (variable.match(/[a-zA-Z0-9]/)) {
+        regions.push({
+          type: 'variable',
+          value: variable,
+          startIndex: match.index + symbolCommand.length + 2, // 跳过 "\command{"
+          endIndex: match.index + symbolCommand.length + 2 + variable.length,
+          key: `sup_symbol_${match.index}`,
+          originalLatex: match[0],
+        })
+        console.log(`添加上标符号变量区域: ${variable}, 原始LaTeX: ${match[0]}`)
+      }
+    }
+
+    // 13. 识别下标中的变量（如 x_i, y_j 等）
+    const subscriptVariablePattern = /([a-zA-Z])_\{([^}]+)\}/g
+    while ((match = subscriptVariablePattern.exec(latex)) !== null) {
+      const baseVariable = match[1]
+      const subscript = match[2]
+
+      console.log(`找到下标变量: ${baseVariable}_{${subscript}}`)
+
+      // 添加基础变量
+      regions.push({
+        type: 'variable',
+        value: baseVariable,
+        startIndex: match.index,
+        endIndex: match.index + 1,
+        key: `base_var_${match.index}`,
+        originalLatex: match[0],
+      })
+      console.log(`添加基础变量区域: ${baseVariable}`)
+
+      // 添加下标内容（如果包含字母数字）
+      if (subscript.match(/[a-zA-Z0-9]/)) {
+        regions.push({
+          type: 'subscript',
+          value: subscript,
+          startIndex: match.index + 2, // 跳过 "_{"
+          endIndex: match.index + 2 + subscript.length,
+          key: `sub_var_${match.index}`,
+          originalLatex: match[0],
+        })
+        console.log(`添加下标变量区域: ${subscript}`)
+      }
+    }
+
+    // 14. 识别上标中的变量（如 x^n, y^m 等）
+    const superscriptVariablePattern = /([a-zA-Z])\^\{([^}]+)\}/g
+    while ((match = superscriptVariablePattern.exec(latex)) !== null) {
+      const baseVariable = match[1]
+      const superscript = match[2]
+
+      console.log(`找到上标变量: ${baseVariable}^{${superscript}}`)
+
+      // 添加基础变量
+      regions.push({
+        type: 'variable',
+        value: baseVariable,
+        startIndex: match.index,
+        endIndex: match.index + 1,
+        key: `base_var_sup_${match.index}`,
+        originalLatex: match[0],
+      })
+      console.log(`添加基础变量区域: ${baseVariable}`)
+
+      // 添加上标内容（如果包含字母数字）
+      if (superscript.match(/[a-zA-Z0-9]/)) {
+        regions.push({
+          type: 'superscript',
+          value: superscript,
+          startIndex: match.index + 2, // 跳过 "^{"
+          endIndex: match.index + 2 + superscript.length,
+          key: `sup_var_${match.index}`,
+          originalLatex: match[0],
+        })
+        console.log(`添加上标变量区域: ${superscript}`)
+      }
+    }
 
     console.log('基于括号识别完成，可编辑区域数量:', regions.length)
     console.log('识别到的可编辑区域:', regions)
@@ -1415,17 +1820,26 @@ export class FormulaPreview {
         switch (region.type) {
           case 'function_parameter':
             if (region.functionName) {
-              // 函数参数：\function{old} -> \function{new}
-              console.log(
-                `更新函数参数: ${region.functionName}{${region.value}} -> ${region.functionName}{${newValue}}`
-              )
-              newContent = oldContent.replace(/\{([^}]+)\}/, `{${newValue}}`)
+              // 检查是圆括号还是大括号格式
+              if (oldContent.includes('(') && oldContent.includes(')')) {
+                // 圆括号函数：\function(old) -> \function(new)
+                console.log(
+                  `更新圆括号函数参数: ${region.functionName}(${region.value}) -> ${region.functionName}(${newValue})`
+                )
+                newContent = oldContent.replace(/\(([^)]+)\)/, `(${newValue})`)
+              } else {
+                // 大括号函数：\function{old} -> \function{new}
+                console.log(
+                  `更新大括号函数参数: ${region.functionName}{${region.value}} -> ${region.functionName}{${newValue}}`
+                )
+                newContent = oldContent.replace(/\{([^}]+)\}/, `{${newValue}}`)
+              }
             } else {
-              // 圆括号函数：\function(old) -> \function(new)
+              // 备用方案：直接替换
               console.log(
-                `更新圆括号函数参数: ${oldContent} -> 替换 ${region.value} 为 ${newValue}`
+                `更新函数参数（备用方案）: ${oldContent} -> 替换 ${region.value} 为 ${newValue}`
               )
-              newContent = oldContent.replace(/\(([^)]+)\)/, `(${newValue})`)
+              newContent = oldContent.replace(region.value, newValue)
             }
             console.log(`函数参数更新结果: "${oldContent}" -> "${newContent}"`)
             break
@@ -1659,159 +2073,203 @@ export class FormulaPreview {
   // 查找并更新输入框的核心逻辑
   private findAndUpdateInputField(newLatex: string): boolean {
     try {
-      // 方法1: 直接查找所有textarea和input元素
-      const allInputs = document.querySelectorAll('textarea, input[type="text"]')
-      console.log(`找到 ${allInputs.length} 个输入元素`)
+      console.log(`开始查找LaTeX输入框，目标LaTeX: "${newLatex}"`)
 
-      let foundField = false
+      // 方法1: 查找formula模态框中的textarea
+      const formulaModals = document.querySelectorAll(
+        '.formula-modal-container, .formula-edit-container'
+      )
+      console.log(`找到 ${formulaModals.length} 个公式模态框`)
 
-      for (let i = 0; i < allInputs.length; i++) {
-        const field = allInputs[i] as HTMLInputElement | HTMLTextAreaElement
-        const fieldValue = field.value || ''
+      for (let i = 0; i < formulaModals.length; i++) {
+        const modal = formulaModals[i]
+        const textareas = modal.querySelectorAll('textarea')
+        console.log(`模态框 ${i} 中找到 ${textareas.length} 个textarea`)
 
-        console.log(`检查输入框 ${i}:`, {
-          tagName: field.tagName,
-          value: fieldValue.substring(0, 50), // 只显示前50个字符
-          element: field,
-        })
-
-        // 检查是否包含LaTeX语法特征
-        if (fieldValue.includes('\\') || fieldValue.includes('{') || fieldValue.includes('}')) {
-          console.log(`找到LaTeX输入框 ${i}:`, field)
-
-          // 更新输入框的值
-          const oldValue = field.value
-          field.value = newLatex
-
-          // 触发多个事件，确保变化被捕获
-          const events = ['input', 'change', 'keyup', 'paste']
-          events.forEach(eventType => {
-            const event = new Event(eventType, { bubbles: true })
-            field.dispatchEvent(event)
+        for (let j = 0; j < textareas.length; j++) {
+          const textarea = textareas[j] as HTMLTextAreaElement
+          console.log(`检查textarea ${j}:`, {
+            id: textarea.id,
+            value: textarea.value.substring(0, 50),
+            placeholder: textarea.placeholder,
           })
 
-          console.log(`已更新输入框: "${oldValue}" -> "${newLatex}"`)
-          foundField = true
-          break
-        }
-      }
+          // 检查是否是LaTeX输入框（通过placeholder或已有内容判断）
+          const isLatexField =
+            textarea.placeholder?.includes('LaTeX') ||
+            textarea.placeholder?.includes('公式') ||
+            textarea.value.includes('\\') ||
+            textarea.value.includes('{') ||
+            textarea.value.includes('}')
 
-      // 方法2: 如果方法1失败，尝试查找包含特定内容的输入框
-      if (!foundField) {
-        console.log('方法1失败，尝试方法2: 查找包含当前LaTeX的输入框')
+          if (isLatexField) {
+            console.log(`找到LaTeX输入框:`, textarea)
 
-        for (let i = 0; i < allInputs.length; i++) {
-          const field = allInputs[i] as HTMLInputElement | HTMLTextAreaElement
-          const fieldValue = field.value || ''
+            const oldValue = textarea.value
+            textarea.value = newLatex
 
-          // 检查是否包含当前LaTeX的一部分
-          if (this.currentLatex && fieldValue.includes(this.currentLatex.substring(0, 5))) {
-            console.log(`通过内容匹配找到输入框:`, field)
-
-            const oldValue = field.value
-            field.value = newLatex
-
-            // 触发事件
-            const events = ['input', 'change', 'keyup', 'paste']
+            // 触发事件 - 兼容Dom7事件系统
+            const events = ['input', 'change', 'keyup']
             events.forEach(eventType => {
-              const event = new Event(eventType, { bubbles: true })
-              field.dispatchEvent(event)
+              // 方法1: 原生DOM事件
+              const event = new Event(eventType, { bubbles: true, cancelable: true })
+              textarea.dispatchEvent(event)
+
+              // 方法2: 使用Dom7方式触发（如果有Dom7实例）
+              try {
+                const $textarea = $(textarea)
+                if ($textarea && $textarea.trigger) {
+                  $textarea.trigger(eventType)
+                }
+              } catch (e) {
+                console.log('Dom7触发失败，使用原生事件:', e)
+              }
             })
 
-            console.log(`已通过内容匹配更新输入框: "${oldValue}" -> "${newLatex}"`)
-            foundField = true
-            break
+            // 方法3: 直接模拟键盘输入来确保事件被正确触发
+            this.simulateKeyboardInput(textarea, newLatex)
+
+            // 额外触发原生事件
+            textarea.focus()
+
+            console.log(`已更新LaTeX输入框: "${oldValue}" -> "${newLatex}"`)
+            return true
           }
         }
       }
 
-      // 方法3: 如果前两种方法都失败，尝试查找任何包含LaTeX的输入框
-      if (!foundField) {
-        console.log('前两种方法都失败，尝试方法3: 查找任何LaTeX输入框')
+      // 方法2: 如果方法1失败，查找所有可能的LaTeX输入框
+      console.log('方法1失败，尝试方法2: 全局搜索LaTeX输入框')
+      const allTextareas = document.querySelectorAll('textarea')
+      console.log(`全局找到 ${allTextareas.length} 个textarea`)
 
-        for (let i = 0; i < allInputs.length; i++) {
-          const field = allInputs[i] as HTMLInputElement | HTMLTextAreaElement
-          const fieldValue = field.value || ''
+      for (let i = 0; i < allTextareas.length; i++) {
+        const textarea = allTextareas[i] as HTMLTextAreaElement
+        const fieldValue = textarea.value || ''
 
-          // 检查是否包含常见的LaTeX命令
-          const latexCommands = [
-            '\\frac',
-            '\\sqrt',
-            '\\exp',
-            '\\sin',
-            '\\cos',
-            '\\tan',
-            '\\log',
-            '\\ln',
-          ]
-          const hasLatexCommand = latexCommands.some(cmd => fieldValue.includes(cmd))
+        // 更精确的LaTeX检测：检查是否包含当前编辑的LaTeX的基础部分
+        const isLatexField =
+          fieldValue.includes('\\sin') ||
+          fieldValue.includes('\\cos') ||
+          fieldValue.includes('\\tan') ||
+          fieldValue.includes('\\log') ||
+          fieldValue.includes('\\ln') ||
+          fieldValue.includes('\\exp') ||
+          fieldValue.includes('\\frac') ||
+          fieldValue.includes('\\sqrt') ||
+          fieldValue.length === 0 // 空的输入框也可能是目标
 
-          if (hasLatexCommand) {
-            console.log(`通过LaTeX命令匹配找到输入框:`, field)
+        if (isLatexField) {
+          console.log(`通过全局搜索找到LaTeX输入框:`, textarea)
 
-            const oldValue = field.value
-            field.value = newLatex
+          const oldValue = textarea.value
+          textarea.value = newLatex
 
-            // 触发事件
-            const events = ['input', 'change', 'keyup', 'paste']
-            events.forEach(eventType => {
-              const event = new Event(eventType, { bubbles: true })
-              field.dispatchEvent(event)
-            })
+          // 触发事件
+          const events = ['input', 'change', 'keyup']
+          events.forEach(eventType => {
+            const event = new Event(eventType, { bubbles: true, cancelable: true })
+            textarea.dispatchEvent(event)
+          })
 
-            console.log(`已通过LaTeX命令匹配更新输入框: "${oldValue}" -> "${newLatex}"`)
-            foundField = true
-            break
-          }
+          textarea.focus()
+
+          console.log(`已更新LaTeX输入框: "${oldValue}" -> "${newLatex}"`)
+          return true
         }
       }
 
-      // 方法4: 如果前三种方法都失败，尝试查找任何包含反斜杠的输入框
-      if (!foundField) {
-        console.log('前三种方法都失败，尝试方法4: 查找任何包含反斜杠的输入框')
-
-        for (let i = 0; i < allInputs.length; i++) {
-          const field = allInputs[i] as HTMLInputElement | HTMLTextAreaElement
-          const fieldValue = field.value || ''
-
-          if (fieldValue.includes('\\')) {
-            console.log(`通过反斜杠匹配找到输入框:`, field)
-
-            const oldValue = field.value
-            field.value = newLatex
-
-            // 触发事件
-            const events = ['input', 'change', 'keyup', 'paste']
-            events.forEach(eventType => {
-              const event = new Event(eventType, { bubbles: true })
-              field.dispatchEvent(event)
-            })
-
-            console.log(`已通过反斜杠匹配更新输入框: "${oldValue}" -> "${newLatex}"`)
-            foundField = true
-            break
-          }
-        }
-      }
-
-      if (!foundField) {
-        console.warn('未能找到LaTeX输入框进行更新')
-        console.log(
-          '当前页面所有输入框:',
-          Array.from(allInputs).map((el, i) => ({
-            index: i,
-            tagName: el.tagName,
-            value: (el as HTMLInputElement | HTMLTextAreaElement).value?.substring(0, 100),
-          }))
-        )
-      } else {
-        console.log('输入框更新成功！')
-      }
-
-      return foundField
+      console.log('未找到合适的LaTeX输入框')
+      return false
     } catch (error) {
       console.error('查找并更新输入框失败:', error)
       return false
+    }
+  }
+
+  // 模拟键盘输入 - 更真实地触发输入事件
+  private simulateKeyboardInput(textarea: HTMLTextAreaElement, newLatex: string): void {
+    try {
+      console.log('开始模拟键盘输入，目标值:', newLatex)
+
+      // 先清空
+      textarea.value = ''
+      textarea.focus()
+
+      // 模拟逐字符输入
+      for (let i = 0; i < newLatex.length; i++) {
+        textarea.value = newLatex.substring(0, i + 1)
+
+        // 触发多种输入事件
+        const inputEvent = new InputEvent('input', {
+          bubbles: true,
+          cancelable: true,
+          data: newLatex.charAt(i),
+          inputType: 'insertText',
+        })
+        textarea.dispatchEvent(inputEvent)
+
+        // 同时触发keyup事件
+        const keyupEvent = new KeyboardEvent('keyup', {
+          bubbles: true,
+          cancelable: true,
+          key: newLatex.charAt(i),
+        })
+        textarea.dispatchEvent(keyupEvent)
+      }
+
+      // 最后触发change事件
+      const changeEvent = new Event('change', { bubbles: true, cancelable: true })
+      textarea.dispatchEvent(changeEvent)
+
+      console.log('键盘输入模拟完成')
+    } catch (error) {
+      console.error('模拟键盘输入失败:', error)
+    }
+  }
+
+  // 手动触发输入更新 - 直接模拟输入事件的效果
+  private triggerManualInputUpdate(textarea: HTMLTextAreaElement, newLatex: string): void {
+    try {
+      console.log('尝试手动触发输入更新')
+
+      // 查找包含这个textarea的模态框容器
+      let container = textarea.parentElement
+      while (
+        container &&
+        !container.classList.contains('formula-modal-container') &&
+        !container.classList.contains('formula-edit-container')
+      ) {
+        container = container.parentElement
+      }
+
+      if (container) {
+        console.log('找到模态框容器:', container)
+
+        // 查找预览面板并直接调用renderPreview
+        const previewContainers = container.querySelectorAll('.formula-preview-container')
+        previewContainers.forEach(previewContainer => {
+          // 尝试通过全局变量或DOM属性找到对应的FormulaPreview实例
+          const event = new CustomEvent('manualLatexUpdate', {
+            detail: { latex: newLatex },
+            bubbles: true,
+          })
+          previewContainer.dispatchEvent(event)
+        })
+
+        // 额外尝试：通过window对象查找编辑器实例
+        const globalWindow = window as any
+        if (globalWindow.editor && globalWindow.editor.getMenus) {
+          const menus = globalWindow.editor.getMenus()
+          const insertMenu = menus.find((m: any) => m.title && m.title.includes('formula'))
+          if (insertMenu && insertMenu.previewPanel) {
+            insertMenu.previewPanel.renderPreview(newLatex)
+            console.log('通过编辑器实例直接更新预览')
+          }
+        }
+      }
+    } catch (error) {
+      console.error('手动触发输入更新失败:', error)
     }
   }
 

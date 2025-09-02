@@ -13,7 +13,7 @@ import {
   genModalTextareaElems,
   genModalButtonElems,
 } from '@wangeditor/editor'
-import { SIGMA_SVG } from '../../constants/icon-svg'
+import { SIGMA_SVG, CLEAR_SVG } from '../../constants/icon-svg'
 import $, { Dom7Array, DOMElement } from '../../utils/dom'
 import { genRandomStr } from '../../utils/util'
 import { FormulaElement } from '../custom-types'
@@ -119,6 +119,24 @@ class InsertFormulaMenu implements IModalMenu {
           console.log('获取到的LaTeX:', latex)
 
           if (latex) {
+            // 特殊处理清空按钮
+            if (latex === 'CLEAR_BUTTON') {
+              console.log('清空按钮被点击，清空输入框')
+              const $textarea = $content.find(`#${textareaId}`)
+              $textarea.val('')
+              $textarea.focus()
+
+              // 手动触发原生input事件来更新预览
+              const textareaElement = $textarea[0] as HTMLTextAreaElement
+              if (textareaElement) {
+                const inputEvent = new Event('input', { bubbles: true })
+                textareaElement.dispatchEvent(inputEvent)
+              }
+
+              console.log('已清空输入框内容')
+              return
+            }
+
             console.log('调用onInsert回调函数')
             // 将模板插入到textarea中
             const currentValue = $content.find(`#${textareaId}`).val() as string
@@ -162,6 +180,24 @@ class InsertFormulaMenu implements IModalMenu {
         editor.hidePanelOrModal() // 隐藏 modal
       })
 
+      // 绑定清空按钮事件
+      $content.on('click', '#clear-formula-btn', e => {
+        e.preventDefault()
+        console.log('清空按钮被点击，清空输入框')
+        const $textarea = $content.find(`#${textareaId}`)
+        $textarea.val('')
+        $textarea.focus()
+
+        // 手动触发原生input事件来更新预览
+        const textareaElement = $textarea[0] as HTMLTextAreaElement
+        if (textareaElement) {
+          const inputEvent = new Event('input', { bubbles: true })
+          textareaElement.dispatchEvent(inputEvent)
+        }
+
+        console.log('已清空输入框内容')
+      })
+
       // 记录属性，重要
       this.$content = $content
     }
@@ -191,6 +227,17 @@ class InsertFormulaMenu implements IModalMenu {
       const $previewPanel = this.previewPanel.createPreview()
       $rightPanel.append($previewPanel)
     }
+
+    // 在预览区下方添加清空按钮
+    const $clearButtonContainer = $('<div class="clear-button-container"></div>')
+    const $clearButton = $(`
+      <button class="clear-button" id="clear-formula-btn" title="清空公式">
+        ${CLEAR_SVG}
+        <span class="clear-button-text">清空</span>
+      </button>
+    `)
+    $clearButtonContainer.append($clearButton)
+    $rightPanel.append($clearButtonContainer)
 
     // 组装布局
     $mainContainer.append($leftPanel)

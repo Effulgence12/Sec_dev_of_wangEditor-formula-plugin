@@ -168,10 +168,29 @@ export const OMEGA_CAPITAL_SVG = `<span class="math-symbol">Ω</span>`
 // ========== 函数的具体图标 ==========
 export const LOG_SVG = `<span class="math-symbol">log</span>`
 export const LN_SVG = `<span class="math-symbol">ln</span>`
-export const EXP_FUNC_SVG = `<span class="math-symbol">exp</span>`
+export const EXP_FUNC_SVG = `<span class="math-symbol">e^x</span>`
 export const SIN_SVG = `<span class="math-symbol">sin</span>`
 export const COS_SVG = `<span class="math-symbol">cos</span>`
 export const TAN_SVG = `<span class="math-symbol">tan</span>`
 export const COT_SVG = `<span class="math-symbol">cot</span>`
 export const SEC_SVG = `<span class="math-symbol">sec</span>`
 export const CSC_SVG = `<span class="math-symbol">csc</span>`
+
+// ========== 清空按钮图标 ==========
+export const CLEAR_SVG = `<span class="math-symbol">🗑️</span>`
+
+// ========== 上标符号的具体图标 ==========
+export const SUPERSCRIPT_SVG = `<span class="math-symbol">x^a</span>`
+export const OVERLINE_SVG = `<span class="math-symbol">x̄</span>`
+export const PRIME_SVG = `<span class="math-symbol">x′</span>`
+export const DOUBLE_PRIME_SVG = `<span class="math-symbol">x″</span>`
+export const TRIPLE_PRIME_SVG = `<span class="math-symbol">x‴</span>`
+export const DOT_SVG = `<span class="math-symbol">ẋ</span>`
+export const DOUBLE_DOT_SVG = `<span class="math-symbol">ẍ</span>`
+export const TILDE_SVG = `<span class="math-symbol">x̃</span>`
+export const HAT_SVG = `<span class="math-symbol">x̂</span>`
+export const VEC_SVG = `<span class="math-symbol">x⃗</span>`
+export const BAR_SVG = `<span class="math-symbol">x̄</span>`
+export const CHECK_SVG = `<span class="math-symbol">x̌</span>`
+export const BREVE_SVG = `<span class="math-symbol">x̆</span>`
+export const RING_SVG = `<span class="math-symbol">x̊</span>`
